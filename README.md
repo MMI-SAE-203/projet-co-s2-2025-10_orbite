@@ -16,7 +16,6 @@
 
 | Étudiants    | Prénom NOM  |
 | :----------- | :---------- |
-| Étudiant 1   | à compléter |
-| Étudiant 2   | à compléter |
-| Étudiant 3   | à compléter |
-| (Étudiant 4) | à compléter |
+| Étudiant 1   | alexandre demling |
+| Étudiant 2   | gautier vicat |
+| Étudiant 3   | florian goerig |

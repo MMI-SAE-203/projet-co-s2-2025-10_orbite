@@ -1,0 +1,300 @@
+---
+---
+
+<header class="absolute top-0 left-0 right-0 z-50 bg-transparent">
+    <nav class="max-w-6xl mx-auto px-4 py-6">
+      <div class="flex items-center justify-between">
+        
+        <div class="flex items-center">
+          <a href="/dashboard" class="flex items-center hover:opacity-80 transition-opacity">
+            <img 
+              src="/images/logo-orbite.svg" 
+              alt="Orbite" 
+              class="h-8 w-auto"
+            />
+          </a>
+        </div>
+        
+       
+        <div class="hidden lg:flex items-center space-x-6">
+          <a href="/dashboard" 
+             class="nav-link text-white hover:text-yellow-400 transition-all duration-300 font-medium px-4 py-2 rounded-lg relative overflow-hidden group">
+            <span class="relative z-10">Accueil</span>
+            <div class="absolute inset-0 bg-yellow-400/20 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+          </a>
+          <a href="/activities" 
+             class="nav-link text-white hover:text-yellow-400 transition-all duration-300 font-medium px-4 py-2 rounded-lg relative overflow-hidden group">
+            <span class="relative z-10">Activités</span>
+            <div class="absolute inset-0 bg-yellow-400/20 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+          </a>
+          <a href="/map" 
+             class="nav-link text-white hover:text-yellow-400 transition-all duration-300 font-medium px-4 py-2 rounded-lg relative overflow-hidden group">
+            <span class="relative z-10">Carte</span>
+            <div class="absolute inset-0 bg-yellow-400/20 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+          </a>
+          <a href="/help" 
+             class="nav-link text-white hover:text-yellow-400 transition-all duration-300 font-medium px-4 py-2 rounded-lg relative overflow-hidden group">
+            <span class="relative z-10">Nous aider</span>
+            <div class="absolute inset-0 bg-yellow-400/20 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+          </a>
+          <a href="/dashboard/about" 
+             class="nav-link text-white hover:text-yellow-400 transition-all duration-300 font-medium px-4 py-2 rounded-lg relative overflow-hidden group">
+            <span class="relative z-10">À propos</span>
+            <div class="absolute inset-0 bg-yellow-400/20 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+          </a>
+          <a href="/dashboard/contact" 
+             class="nav-link text-white hover:text-yellow-400 transition-all duration-300 font-medium px-4 py-2 rounded-lg relative overflow-hidden group">
+            <span class="relative z-10">Contact</span>
+            <div class="absolute inset-0 bg-yellow-400/20 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+          </a>
+          <a href="/profile" 
+             class="nav-link text-white hover:text-yellow-400 transition-all duration-300 font-medium px-4 py-2 rounded-lg relative overflow-hidden group">
+            <span class="relative z-10">Profil</span>
+            <div class="absolute inset-0 bg-yellow-400/20 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+          </a>
+        </div>
+        
+        
+        <div class="hidden lg:flex items-center space-x-4">
+          <span id="user-name" class="text-white font-medium"></span>
+          <button 
+            id="logout-btn"
+            class="bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-bold px-6 py-2 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
+          >
+            Déconnexion
+          </button>
+        </div>
+        
+       
+        <button 
+          class="lg:hidden text-white p-2 rounded-lg hover:bg-white/10 transition-colors" 
+          id="mobile-menu-btn"
+          aria-label="Menu"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        </button>
+      </div>
+      
+      
+      <div class="lg:hidden hidden" id="mobile-menu">
+        <div class="absolute top-full left-0 right-0 bg-purple-950/95 backdrop-blur-sm border-t border-white/10 shadow-xl">
+          <div class="px-4 py-6 space-y-4">
+            
+            <div class="space-y-3">
+              <a href="/dashboard" 
+                 class="mobile-nav-link block text-white hover:text-yellow-400 py-3 px-4 rounded-lg hover:bg-white/10 transition-all duration-300 font-medium relative overflow-hidden group">
+                <span class="relative z-10">Accueil</span>
+                <div class="absolute inset-0 bg-yellow-400/10 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+              </a>
+              <a href="/activities" 
+                 class="mobile-nav-link block text-white hover:text-yellow-400 py-3 px-4 rounded-lg hover:bg-white/10 transition-all duration-300 font-medium relative overflow-hidden group">
+                <span class="relative z-10">Activités</span>
+                <div class="absolute inset-0 bg-yellow-400/10 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+              </a>
+              <a href="/map" 
+                 class="mobile-nav-link block text-white hover:text-yellow-400 py-3 px-4 rounded-lg hover:bg-white/10 transition-all duration-300 font-medium relative overflow-hidden group">
+                <span class="relative z-10">Carte</span>
+                <div class="absolute inset-0 bg-yellow-400/10 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+              </a>
+              <a href="/help" 
+                 class="mobile-nav-link block text-white hover:text-yellow-400 py-3 px-4 rounded-lg hover:bg-white/10 transition-all duration-300 font-medium relative overflow-hidden group">
+                <span class="relative z-10">Nous aider</span>
+                <div class="absolute inset-0 bg-yellow-400/10 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+              </a>
+              <a href="/dashboard/about" 
+                 class="mobile-nav-link block text-white hover:text-yellow-400 py-3 px-4 rounded-lg hover:bg-white/10 transition-all duration-300 font-medium relative overflow-hidden group">
+                <span class="relative z-10">À propos</span>
+                <div class="absolute inset-0 bg-yellow-400/10 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+              </a>
+              <a href="/dashboard/contact" 
+                 class="mobile-nav-link block text-white hover:text-yellow-400 py-3 px-4 rounded-lg hover:bg-white/10 transition-all duration-300 font-medium relative overflow-hidden group">
+                <span class="relative z-10">Contact</span>
+                <div class="absolute inset-0 bg-yellow-400/10 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+              </a>
+              <a href="/profile" 
+                 class="mobile-nav-link block text-white hover:text-yellow-400 py-3 px-4 rounded-lg hover:bg-white/10 transition-all duration-300 font-medium relative overflow-hidden group">
+                <span class="relative z-10">Profil</span>
+                <div class="absolute inset-0 bg-yellow-400/10 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+              </a>
+            </div>
+            
+           
+            <div class="pt-4 border-t border-white/20 space-y-3">
+              <div class="text-white font-medium" id="user-name-mobile"></div>
+              <button 
+                id="logout-btn-mobile"
+                class="w-full bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 shadow-lg transform hover:scale-105 active:scale-95"
+              >
+                Déconnexion
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </header>
+  
+  <script>
+    import PocketBase from 'pocketbase';
+    
+    const pb = new PocketBase('http://127.0.0.1:8090');
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      
+      const userNameSpan = document.getElementById('user-name');
+      const userNameMobile = document.getElementById('user-name-mobile');
+      if (pb.authStore.model) {
+        const userName = pb.authStore.model.name || pb.authStore.model.email;
+        if (userNameSpan) userNameSpan.textContent = userName;
+        if (userNameMobile) userNameMobile.textContent = userName;
+      }
+      
+     
+      const logoutBtn = document.getElementById('logout-btn');
+      const logoutBtnMobile = document.getElementById('logout-btn-mobile');
+      
+      const handleLogout = () => {
+        pb.authStore.clear();
+        window.location.href = '/';
+      };
+      
+      logoutBtn?.addEventListener('click', handleLogout);
+      logoutBtnMobile?.addEventListener('click', handleLogout);
+      
+      
+      const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+      const mobileMenu = document.getElementById('mobile-menu');
+      
+      if (mobileMenuBtn && mobileMenu) {
+        mobileMenuBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          mobileMenu.classList.toggle('hidden');
+          
+         
+          const svg = mobileMenuBtn.querySelector('svg');
+          const isOpen = !mobileMenu.classList.contains('hidden');
+          
+          if (isOpen) {
+            svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>';
+          } else {
+            svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>';
+          }
+        });
+        
+        
+        document.addEventListener('click', (e) => {
+          if (!mobileMenuBtn.contains(e.target) && !mobileMenu.contains(e.target)) {
+            mobileMenu.classList.add('hidden');
+            const svg = mobileMenuBtn.querySelector('svg');
+            svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>';
+          }
+        });
+        
+       
+        const mobileLinks = mobileMenu.querySelectorAll('a');
+        mobileLinks.forEach(link => {
+          link.addEventListener('click', () => {
+            mobileMenu.classList.add('hidden');
+            const svg = mobileMenuBtn.querySelector('svg');
+            svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>';
+          });
+        });
+      }
+      
+      
+      const currentPath = window.location.pathname;
+      const navLinks = document.querySelectorAll('.nav-link, .mobile-nav-link');
+      
+      navLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        if (href === currentPath || (href === '/dashboard' && currentPath === '/dashboard')) {
+          
+          link.classList.add('active');
+          link.style.backgroundColor = 'rgba(250, 204, 21, 0.2)';
+          link.style.color = '#fbbf24';
+          link.style.transform = 'scale(1.05)';
+          link.style.boxShadow = '0 0 20px rgba(250, 204, 21, 0.3)';
+        }
+        
+        // Effet de clic
+        link.addEventListener('click', function(e) {
+          // Retirer l'état actif de tous les liens
+          navLinks.forEach(l => {
+            l.classList.remove('active');
+            l.style.backgroundColor = '';
+            l.style.color = '';
+            l.style.transform = '';
+            l.style.boxShadow = '';
+          });
+          
+          // Ajouter l'état actif au lien cliqué
+          this.classList.add('active');
+          this.style.backgroundColor = 'rgba(250, 204, 21, 0.3)';
+          this.style.color = '#fbbf24';
+          this.style.transform = 'scale(1.05)';
+          this.style.boxShadow = '0 0 20px rgba(250, 204, 21, 0.4)';
+          
+          // Effet de pulsation au clic
+          this.style.animation = 'pulse 0.3s ease-in-out';
+          setTimeout(() => {
+            this.style.animation = '';
+          }, 300);
+        });
+      });
+    });
+  </script>
+  
+  <style>
+  
+    #mobile-menu {
+      transition: all 0.3s ease-in-out;
+    }
+    
+    #mobile-menu.hidden {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    
+    #mobile-menu:not(.hidden) {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+  
+    @keyframes pulse {
+      0% {
+        transform: scale(1.05);
+      }
+      50% {
+        transform: scale(1.1);
+      }
+      100% {
+        transform: scale(1.05);
+      }
+    }
+    
+    
+    .nav-link:hover,
+    .mobile-nav-link:hover {
+      text-shadow: 0 0 10px rgba(250, 204, 21, 0.5);
+    }
+    
+    
+    .nav-link.active,
+    .mobile-nav-link.active {
+      background: rgba(250, 204, 21, 0.2) !important;
+      color: #fbbf24 !important;
+      transform: scale(1.05) !important;
+      box-shadow: 0 0 20px rgba(250, 204, 21, 0.3) !important;
+      border: 1px solid rgba(250, 204, 21, 0.3);
+    }
+    
+   
+    .nav-link,
+    .mobile-nav-link {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  </style>
+  

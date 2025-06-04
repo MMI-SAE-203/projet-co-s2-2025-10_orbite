@@ -1,0 +1,170 @@
+---
+const { 
+  height = "h-64", 
+  initialLat = 47.5101, 
+  initialLng = 6.7988, 
+  zoom = 13,
+  interactive = true,
+  showLocationPicker = false
+} = Astro.props;
+
+const mapId = `map-${Math.random().toString(36).substr(2, 9)}`;
+---
+
+<div class={`w-full ${height} rounded-lg overflow-hidden relative`}>
+  <div id={mapId} class="w-full h-full"></div>
+  
+  {showLocationPicker && (
+    <div class="absolute top-2 left-2 z-[1000] bg-white/90 backdrop-blur-sm rounded-lg p-2 text-sm text-gray-700">
+      <span class="text-purple-600">📍</span> Cliquez pour placer votre événement
+    </div>
+  )}
+</div>
+
+<script define:vars={{ mapId, initialLat, initialLng, zoom, interactive, showLocationPicker }}>
+  document.addEventListener('DOMContentLoaded', () => {
+    
+    if (typeof L === 'undefined') {
+      console.error('Leaflet n\'est pas chargé');
+      return;
+    }
+
+    try {
+    
+      const map = L.map(mapId, {
+        center: [initialLat, initialLng],
+        zoom: zoom,
+        zoomControl: interactive,
+        dragging: interactive,
+        touchZoom: interactive,
+        scrollWheelZoom: interactive,
+        doubleClickZoom: interactive,
+        boxZoom: interactive,
+        keyboard: interactive
+      });
+
+   
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+      }).addTo(map);
+
+      
+      const orbiteIcon = L.divIcon({
+        className: 'custom-orbite-marker',
+        html: `
+          <div class="orbite-marker-container">
+            <div class="orbite-marker-pulse"></div>
+            <img src="/images/logo-orbite.svg" alt="Orbite" class="orbite-marker-logo" />
+          </div>
+        `,
+        iconSize: [40, 40],
+        iconAnchor: [20, 40],
+        popupAnchor: [0, -40]
+      });
+
+      
+      let marker = L.marker([initialLat, initialLng], { 
+        icon: orbiteIcon, 
+        draggable: showLocationPicker 
+      }).addTo(map);
+
+      if (showLocationPicker) {
+       
+        function updateCoordinates(lat, lng) {
+         
+          const event = new CustomEvent('locationSelected', {
+            detail: { lat, lng }
+          });
+          document.dispatchEvent(event);
+        }
+
+       
+        marker.on('dragend', function(e) {
+          const position = marker.getLatLng();
+          updateCoordinates(position.lat, position.lng);
+        });
+
+       
+        map.on('click', function(e) {
+          map.removeLayer(marker);
+          marker = L.marker(e.latlng, { icon: orbiteIcon, draggable: true }).addTo(map);
+          updateCoordinates(e.latlng.lat, e.latlng.lng);
+          
+          marker.on('dragend', function(e) {
+            const position = marker.getLatLng();
+            updateCoordinates(position.lat, position.lng);
+          });
+        });
+
+        
+        updateCoordinates(initialLat, initialLng);
+      }
+
+      
+      window[`map_${mapId}`] = map;
+      window[`marker_${mapId}`] = marker;
+
+    } catch (error) {
+      console.error("Erreur lors de l'initialisation de la carte:", error);
+      const mapContainer = document.getElementById(mapId);
+      if (mapContainer) {
+        mapContainer.innerHTML = '<div class="flex items-center justify-center h-full bg-red-900/50 text-white">Erreur lors du chargement de la carte</div>';
+      }
+    }
+  });
+</script>
+
+<style>
+ 
+  .orbite-marker-container {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .orbite-marker-pulse {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(147, 51, 234, 0.3);
+    animation: pulse 2s infinite;
+    z-index: 1;
+  }
+
+  .orbite-marker-logo {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: white;
+    padding: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    z-index: 2;
+    position: relative;
+  }
+
+  @keyframes pulse {
+    0% {
+      transform: scale(0.8);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.2);
+      opacity: 0.5;
+    }
+    100% {
+      transform: scale(0.8);
+      opacity: 1;
+    }
+  }
+
+  .orbite-marker-logo:hover {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 8px rgba(147, 51, 234, 0.6));
+  }
+</style>

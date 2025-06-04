@@ -1,0 +1,151 @@
+---
+---
+
+<header class="absolute top-0 left-0 right-0 z-50 bg-transparent">
+    <nav class="max-w-6xl mx-auto px-4 py-6">
+      <div class="flex items-center justify-between">
+       
+        <div class="flex items-center">
+          <a href="/" class="flex items-center hover:opacity-80 transition-opacity">
+            <img 
+              src="/images/logo-orbite.svg" 
+              alt="Orbite" 
+              class="h-8 w-auto"
+            />
+          </a>
+        </div>
+        
+        
+        <div class="hidden md:flex items-center space-x-8">
+          <a href="/" class="text-white hover:text-yellow-400 transition-colors font-medium">
+            Accueil
+          </a>
+          <a href="/about" class="text-white hover:text-yellow-400 transition-colors font-medium">
+            À propos
+          </a>
+          <a href="/contact" class="text-white hover:text-yellow-400 transition-colors font-medium">
+            Contact
+          </a>
+        </div>
+        
+       
+        <div class="hidden md:flex items-center space-x-4">
+          <a href="/auth/login" 
+             class="text-white hover:text-yellow-400 transition-colors font-medium px-4 py-2 rounded-lg border border-white/20 hover:border-yellow-400/50">
+            Connexion
+          </a>
+          <a href="/auth/register" 
+             class="bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-6 py-2 rounded-lg transition-colors shadow-lg">
+            Inscription
+          </a>
+        </div>
+        
+        
+        <button 
+          class="md:hidden text-white p-2 rounded-lg hover:bg-white/10 transition-colors" 
+          id="mobile-menu-btn"
+          aria-label="Menu"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        </button>
+      </div>
+      
+      
+      <div class="md:hidden hidden" id="mobile-menu">
+        <div class="absolute top-full left-0 right-0 bg-purple-900/95 backdrop-blur-sm border-t border-white/10 shadow-xl">
+          <div class="px-4 py-6 space-y-4">
+            
+            <div class="space-y-3">
+              <a href="/" 
+                 class="block text-white hover:text-yellow-400 py-3 px-4 rounded-lg hover:bg-white/10 transition-colors font-medium">
+                Accueil
+              </a>
+              <a href="/about" 
+                 class="block text-white hover:text-yellow-400 py-3 px-4 rounded-lg hover:bg-white/10 transition-colors font-medium">
+                À propos
+              </a>
+              <a href="/contact" 
+                 class="block text-white hover:text-yellow-400 py-3 px-4 rounded-lg hover:bg-white/10 transition-colors font-medium">
+                Contact
+              </a>
+            </div>
+            
+           
+            <div class="pt-4 border-t border-white/20 space-y-3">
+              <a href="/auth/login" 
+                 class="block text-center text-white hover:text-yellow-400 py-3 px-4 rounded-lg border border-white/20 hover:border-yellow-400/50 transition-colors font-medium">
+                Connexion
+              </a>
+              <a href="/auth/register" 
+                 class="block text-center bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-3 px-4 rounded-lg transition-colors shadow-lg">
+                Inscription
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </header>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+      const mobileMenu = document.getElementById('mobile-menu');
+      
+      if (mobileMenuBtn && mobileMenu) {
+        mobileMenuBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          mobileMenu.classList.toggle('hidden');
+          
+          
+          const svg = mobileMenuBtn.querySelector('svg');
+          const isOpen = !mobileMenu.classList.contains('hidden');
+          
+          if (isOpen) {
+            svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>';
+          } else {
+            svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>';
+          }
+        });
+        
+        
+        document.addEventListener('click', (e) => {
+          if (!mobileMenuBtn.contains(e.target) && !mobileMenu.contains(e.target)) {
+            mobileMenu.classList.add('hidden');
+            const svg = mobileMenuBtn.querySelector('svg');
+            svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>';
+          }
+        });
+        
+        
+        const mobileLinks = mobileMenu.querySelectorAll('a');
+        mobileLinks.forEach(link => {
+          link.addEventListener('click', () => {
+            mobileMenu.classList.add('hidden');
+            const svg = mobileMenuBtn.querySelector('svg');
+            svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>';
+          });
+        });
+      }
+    });
+  </script>
+  
+  <style>
+   
+    #mobile-menu {
+      transition: all 0.3s ease-in-out;
+    }
+    
+    #mobile-menu.hidden {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    
+    #mobile-menu:not(.hidden) {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+  

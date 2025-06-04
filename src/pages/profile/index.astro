@@ -1,0 +1,1611 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import HeaderDashboard from '../../components/HeaderDashboard.astro';
+import FooterDashboard from '../../components/FooterDashboard.astro';
+import { getUserEvents, getImageUrl, formatDate, getCurrentUser } from '../../lib/pocketbase';
+
+// Récupération des données côté serveur (sera complétée côté client)
+let userEvents = [];
+let currentUser = null;
+
+// Fonction pour obtenir l'icône de catégorie
+function getCategoryIcon(category) {
+  const icons = {
+    'sport': '⚽',
+    'soirée': '🎉',
+    'cinéma': '🎬',
+    'jeux': '🎮',
+    'musique': '🎵',
+    'chill': '😌',
+    'voyages': '✈️',
+    'études': '📚',
+    'resto': '🍽️',
+    'rencontres': '👥',
+    'cuisine': '👨‍🍳',
+    'shopping': '🛍️',
+    'culture': '🎭',
+    'bien-être': '🧘',
+    'bénévolat': '🤝'
+  };
+  return icons[category?.toLowerCase()] || '🌟';
+}
+---
+
+<Layout title="Mon Profil - Orbite">
+  <HeaderDashboard />
+
+  <main class="min-h-screen bg-gradient-to-b from-purple-950 via-purple-900 to-black pt-20">
+
+    <!-- Messages d'état -->
+    <div id="auth-error" class="max-w-4xl mx-auto px-4 py-8 hidden">
+      <div class="bg-red-900/50 border border-red-500 text-white p-6 rounded-lg text-center">
+        <div class="text-6xl mb-4">🔒</div>
+        <h2 class="text-2xl font-bold mb-2">Accès restreint</h2>
+        <p class="mb-4">Vous devez être connecté pour accéder à votre profil.</p>
+        <a href="/login?redirect=/profile" class="inline-block px-6 py-3 bg-yellow-400 text-black rounded-full hover:bg-yellow-500 transition-all font-medium">
+          🔑 Se connecter
+        </a>
+      </div>
+    </div>
+
+    <div id="profile-content" class="max-w-6xl mx-auto px-4 py-8 hidden">
+      
+      <!-- En-tête du profil -->
+      <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 shadow-2xl mb-8">
+        <div class="flex flex-col md:flex-row items-center gap-8">
+          
+          <!-- Photo de profil avec orbite -->
+          <div class="relative group">
+            <!-- ✅ Container pour l'orbite équipée -->
+            <div class="relative w-32 h-32">
+              <!-- SVG de l'orbite équipée (sera mis à jour dynamiquement) -->
+              <div id="equipped-orbit-container" class="absolute inset-0 w-32 h-32">
+                <!-- Orbite par défaut (cercle jaune) -->
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+                  <circle cx="100" cy="100" r="95" fill="none" stroke="#fbbf24" stroke-width="4"/>
+                </svg>
+              </div>
+              
+              <!-- Photo de profil -->
+              <div class="absolute inset-2 w-28 h-28 rounded-full overflow-hidden border-2 border-white/20 shadow-xl">
+                <img 
+                  id="profile-avatar" 
+                  src="/placeholder.svg?height=112&width=112" 
+                  alt="Photo de profil" 
+                  class="w-full h-full object-cover"
+                />
+              </div>
+              
+              <!-- Bouton pour changer d'orbite (cliquable) -->
+              <button 
+                id="change-orbit-btn"
+                class="absolute inset-0 w-32 h-32 rounded-full bg-transparent hover:bg-white/10 transition-all cursor-pointer group-hover:bg-white/5"
+                title="Changer d'orbite"
+              >
+                <div class="absolute bottom-0 right-0 bg-yellow-400 hover:bg-yellow-500 text-black rounded-full p-2 shadow-lg transition-all transform hover:scale-110">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                </div>
+              </button>
+            </div>
+            
+            <!-- Bouton pour changer la photo -->
+            <button 
+              id="change-avatar-btn"
+              class="absolute bottom-0 left-0 bg-purple-600 hover:bg-purple-700 text-white rounded-full p-2 shadow-lg transition-all transform hover:scale-110"
+              title="Changer la photo"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+            <input type="file" id="avatar-input" accept="image/*" class="hidden" />
+          </div>
+          
+          <!-- Informations utilisateur -->
+          <div class="flex-1 text-center md:text-left">
+            <div class="flex items-center gap-4 mb-4">
+              <h1 id="profile-name" class="text-3xl font-bold text-white">Chargement...</h1>
+              <button 
+                id="edit-name-btn"
+                class="bg-white/20 hover:bg-white/30 text-white rounded-full p-2 transition-all"
+                title="Modifier le nom"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+            </div>
+            
+            <div class="space-y-2 text-purple-200">
+              <div class="flex items-center justify-center md:justify-start gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                </svg>
+                <span id="profile-email">email@example.com</span>
+              </div>
+              
+              <div class="flex items-center justify-center md:justify-start gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span id="profile-created">Membre depuis...</span>
+              </div>
+              
+              <div class="flex items-center justify-center md:justify-start gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                <span id="profile-events-count">0 activités créées</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Actions rapides -->
+          <div class="flex flex-col gap-3">
+            <a 
+              href="/creer" 
+              class="inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 px-6 rounded-full transition-all transform hover:scale-105 shadow-lg"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              Créer une activité
+            </a>
+            
+            <!-- ✅ Bouton Boutique -->
+            <a 
+              href="/profile/shop" 
+              class="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-full transition-all transform hover:scale-105 shadow-lg"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+              Boutique
+            </a>
+          </div>
+        </div>
+      </div>
+      
+      <!-- ✅ Statistiques séparées : Création et Participation -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- Activités créées -->
+        <div class="bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl p-6 text-white">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-purple-200 text-sm">Activités créées</p>
+              <p id="stat-events" class="text-3xl font-bold">0</p>
+            </div>
+            <div class="text-4xl"></div>
+          </div>
+        </div>
+        
+        <!-- ✅ Points de création (séparés) -->
+        <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-xl p-6 text-white">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-yellow-100 text-sm">Points création</p>
+              <p id="stat-creation-points" class="text-3xl font-bold">0</p>
+            </div>
+            <div class="text-4xl"></div>
+          </div>
+        </div>
+
+        <!-- ✅ Points de participation (corrigés) -->
+        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-6 text-white">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-green-100 text-sm">Points participation</p>
+              <p id="stat-participation-points" class="text-3xl font-bold">0</p>
+            </div>
+            <div class="text-4xl"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ✅ Total des points (nouveau bloc) -->
+      <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-8 border border-white/20 shadow-2xl mb-8">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-bold text-white mb-2"> Points disponibles</h2>
+            <p class="text-indigo-200 text-sm">Points que vous pouvez dépenser dans la boutique</p>
+          </div>
+          <div class="text-right">
+            <p id="stat-total-points" class="text-5xl font-bold text-white">0</p>
+            <p class="text-indigo-200 text-sm mt-1">points disponibles</p>
+          </div>
+        </div>
+        
+        <!-- Détail des points -->
+        <div class="mt-6 grid grid-cols-2 gap-4">
+          <div class="bg-white/10 rounded-lg p-4">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-yellow-400"></span>
+              <span class="text-white font-medium">Gagnés (création)</span>
+            </div>
+            <p id="detail-creation-points" class="text-2xl font-bold text-yellow-400">0</p>
+            <p class="text-indigo-200 text-xs">+10 pts par activité créée</p>
+          </div>
+          
+          <div class="bg-white/10 rounded-lg p-4">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-green-400"></span>
+              <span class="text-white font-medium">Gagnés (participation)</span>
+            </div>
+            <p id="detail-participation-points" class="text-2xl font-bold text-green-400">0</p>
+            <p class="text-indigo-200 text-xs">+10 pts par participation</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Mes activités -->
+      <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 shadow-2xl">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-white"> Mes activités</h2>
+          <div class="flex gap-2">
+            <button 
+              id="filter-all" 
+              class="filter-btn active px-4 py-2 rounded-full bg-white/20 text-white text-sm transition-all"
+            >
+              Toutes
+            </button>
+            <button 
+              id="filter-upcoming" 
+              class="filter-btn px-4 py-2 rounded-full bg-white/10 text-white text-sm transition-all"
+            >
+              À venir
+            </button>
+            <button 
+              id="filter-past" 
+              class="filter-btn px-4 py-2 rounded-full bg-white/10 text-white text-sm transition-all"
+            >
+              Passées
+            </button>
+          </div>
+        </div>
+        
+        <!-- Liste des événements -->
+        <div id="user-events" class="space-y-4">
+          <!-- Les événements seront chargés ici -->
+        </div>
+        
+        <!-- Message si aucun événement -->
+        <div id="no-events" class="text-center py-12 hidden">
+          <div class="text-6xl mb-4">📝</div>
+          <h3 class="text-xl font-bold text-white mb-2">Aucune activité créée</h3>
+          <p class="text-purple-200 mb-6">Commencez par créer votre première activité !</p>
+          <a 
+            href="/creer" 
+            class="inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 px-6 rounded-full transition-all transform hover:scale-105"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Créer ma première activité
+          </a>
+        </div>
+      </div>
+
+      <!-- Espacement entre les sections -->
+      <div class="mb-8"></div>
+
+      <!-- Mes participations -->
+      <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 shadow-2xl mb-8">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-bold text-white"> Mes participations</h2>
+          <div class="flex gap-2">
+            <button 
+              id="participation-filter-all" 
+              class="participation-filter-btn active px-4 py-2 rounded-full bg-white/20 text-white text-sm transition-all"
+            >
+              Toutes
+            </button>
+            <button 
+              id="participation-filter-upcoming" 
+              class="participation-filter-btn px-4 py-2 rounded-full bg-white/10 text-white text-sm transition-all"
+            >
+              À venir
+            </button>
+            <button 
+              id="participation-filter-past" 
+              class="participation-filter-btn px-4 py-2 rounded-full bg-white/10 text-white text-sm transition-all"
+            >
+              Passées
+            </button>
+          </div>
+        </div>
+        
+        <!-- Liste des participations -->
+        <div id="user-participations" class="space-y-4">
+          <!-- Les participations seront chargées ici -->
+        </div>
+        
+        <!-- Message si aucune participation -->
+        <div id="no-participations" class="text-center py-12 hidden">
+          <div class="text-6xl mb-4">🎭</div>
+          <h3 class="text-xl font-bold text-white mb-2">Aucune participation</h3>
+          <p class="text-purple-200 mb-6">Découvrez les activités disponibles et participez !</p>
+          <a 
+            href="/activities" 
+            class="inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 px-6 rounded-full transition-all transform hover:scale-105"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            Découvrir les activités
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Messages de succès/erreur -->
+    <div id="success-message" class="fixed top-24 right-4 bg-green-600 text-white p-4 rounded-lg shadow-lg transform translate-x-full transition-transform z-50">
+      <div class="flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        <span id="success-text">Profil mis à jour avec succès !</span>
+      </div>
+    </div>
+
+    <div id="error-message" class="fixed top-24 right-4 bg-red-600 text-white p-4 rounded-lg shadow-lg transform translate-x-full transition-transform z-50">
+      <div class="flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        <span id="error-text">Une erreur s'est produite</span>
+      </div>
+    </div>
+  </main>
+
+  <FooterDashboard />
+</Layout>
+
+<!-- ✅ Modal pour changer d'orbite -->
+<div id="orbit-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden">
+  <div class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="text-center mb-6">
+        <h3 class="text-2xl font-bold text-gray-900 mb-2">🌟 Changer d'orbite</h3>
+        <p class="text-gray-600">Sélectionnez l'orbite que vous voulez équiper</p>
+      </div>
+      
+      <!-- Grille des orbites -->
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+        
+        <!-- Orbite par défaut -->
+        <div class="orbit-option bg-gray-50 rounded-xl p-4 border-2 border-transparent hover:border-yellow-400 cursor-pointer transition-all" data-orbit="default">
+          <div class="w-20 h-20 mx-auto mb-3">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+              <circle cx="100" cy="100" r="95" fill="none" stroke="#fbbf24" stroke-width="4"/>
+            </svg>
+          </div>
+          <h4 class="text-sm font-semibold text-gray-900 text-center">Par défaut</h4>
+          <p class="text-xs text-gray-600 text-center mt-1">Gratuit</p>
+        </div>
+        
+        <!-- Orbite Mercure -->
+        <div class="orbit-option bg-gray-50 rounded-xl p-4 border-2 border-transparent hover:border-gray-400 cursor-pointer transition-all" data-orbit="mercure">
+          <div class="w-20 h-20 mx-auto mb-3">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+              <defs>
+                <linearGradient id="mercure-orbit-modal" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#94a3b8;stop-opacity:1" />
+                  <stop offset="50%" style="stop-color:#64748b;stop-opacity:0.5" />
+                  <stop offset="100%" style="stop-color:#475569;stop-opacity:1" />
+                </linearGradient>
+              </defs>
+              <circle cx="100" cy="100" r="95" fill="none" stroke="url(#mercure-orbit-modal)" stroke-width="4"/>
+              <g class="mercure-planet-orbit">
+                <circle cx="100" cy="5" r="7" fill="#94a3b8"/>
+              </g>
+            </svg>
+          </div>
+          <h4 class="text-sm font-semibold text-gray-900 text-center">Mercure</h4>
+          <p class="text-xs text-gray-600 text-center mt-1">100 points</p>
+        </div>
+        
+        <!-- Orbite Vénus -->
+        <div class="orbit-option bg-gray-50 rounded-xl p-4 border-2 border-transparent hover:border-yellow-400 cursor-pointer transition-all" data-orbit="venus">
+          <div class="w-20 h-20 mx-auto mb-3">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+              <defs>
+                <linearGradient id="venus-orbit-modal" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:1" />
+                  <stop offset="50%" style="stop-color:#f59e0b;stop-opacity:0.5" />
+                  <stop offset="100%" style="stop-color:#eab308;stop-opacity:1" />
+                </linearGradient>
+              </defs>
+              <circle cx="100" cy="100" r="95" fill="none" stroke="url(#venus-orbit-modal)" stroke-width="4"/>
+              <g class="venus-planet-orbit">
+                <circle cx="100" cy="5" r="8" fill="#fbbf24"/>
+              </g>
+            </svg>
+          </div>
+          <h4 class="text-sm font-semibold text-gray-900 text-center">Vénus</h4>
+          <p class="text-xs text-gray-600 text-center mt-1">200 points</p>
+        </div>
+        
+        <!-- Orbite Terre -->
+        <div class="orbit-option bg-gray-50 rounded-xl p-4 border-2 border-transparent hover:border-blue-400 cursor-pointer transition-all" data-orbit="terre">
+          <div class="w-20 h-20 mx-auto mb-3">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+              <defs>
+                <linearGradient id="terre-orbit-modal" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+                  <stop offset="50%" style="stop-color:#10b981;stop-opacity:0.5" />
+                  <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1" />
+                </linearGradient>
+              </defs>
+              <circle cx="100" cy="100" r="95" fill="none" stroke="url(#terre-orbit-modal)" stroke-width="4"/>
+              <g class="terre-planet-orbit">
+                <circle cx="100" cy="5" r="8" fill="#3b82f6"/>
+              </g>
+            </svg>
+          </div>
+          <h4 class="text-sm font-semibold text-gray-900 text-center">Terre</h4>
+          <p class="text-xs text-gray-600 text-center mt-1">400 points</p>
+        </div>
+        
+        <!-- Orbite Mars -->
+        <div class="orbit-option bg-gray-50 rounded-xl p-4 border-2 border-transparent hover:border-red-400 cursor-pointer transition-all" data-orbit="mars">
+          <div class="w-20 h-20 mx-auto mb-3">
+            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+              <defs>
+                <linearGradient id="mars-orbit-modal" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#ef4444;stop-opacity:1" />
+                  <stop offset="50%" style="stop-color:#dc2626;stop-opacity:0.5" />
+                  <stop offset="100%" style="stop-color:#991b1b;stop-opacity:1" />
+                </linearGradient>
+              </defs>
+              <circle cx="100" cy="100" r="95" fill="none" stroke="url(#mars-orbit-modal)" stroke-width="4"/>
+              <g class="mars-planet-orbit">
+                <circle cx="100" cy="5" r="7.5" fill="#ef4444"/>
+              </g>
+            </svg>
+          </div>
+          <h4 class="text-sm font-semibold text-gray-900 text-center">Mars</h4>
+          <p class="text-xs text-gray-600 text-center mt-1">600 points</p>
+        </div>
+      </div>
+      
+      <!-- Boutons d'action -->
+      <div class="flex gap-3">
+        <button 
+          id="equip-orbit-btn" 
+          class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-full transition-all disabled:opacity-50"
+          disabled
+        >
+          Équiper
+        </button>
+        <button 
+          id="cancel-orbit-btn" 
+          class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-3 px-6 rounded-full transition-all"
+        >
+          Annuler
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal pour modifier le nom -->
+<div id="name-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden">
+  <div class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-2xl p-8 max-w-md w-full">
+      <h3 class="text-xl font-bold text-gray-900 mb-4">Modifier le nom</h3>
+      <input 
+        type="text" 
+        id="new-name-input" 
+        placeholder="Nouveau nom" 
+        class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500"
+      />
+      <div class="flex gap-3">
+        <button 
+          id="save-name-btn" 
+          class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-all"
+        >
+          Sauvegarder
+        </button>
+        <button 
+          id="cancel-name-btn" 
+          class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 font-medium py-2 px-4 rounded-lg transition-all"
+        >
+          Annuler
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  import PocketBase from 'pocketbase';
+
+  const pb = new PocketBase('http://127.0.0.1:8090');
+  let currentUser = null;
+  let userEvents = [];
+  let currentFilter = 'all';
+  let currentParticipationFilter = 'all';
+  let userParticipations = [];
+  let userOwnedOrbits = [];
+  let equippedOrbit = '';
+  let selectedOrbit = null;
+
+  // Ajouter une fonction pour rafraîchir toutes les données au retour sur la page
+  document.addEventListener('DOMContentLoaded', async () => {
+    await initProfile();
+    
+    // ✅ CORRECTION : Ajouter un événement pour rafraîchir les données quand la page devient visible
+    document.addEventListener('visibilitychange', async () => {
+      if (!document.hidden) {
+        console.log('👁️ Page redevenue visible, rafraîchissement des données...');
+        await loadUserData();
+        await loadUserEvents();
+        await loadUserParticipations();
+        await updateStatistics();
+      }
+    });
+  });
+
+  async function initProfile() {
+    // Vérifier l'authentification
+    if (!pb.authStore.isValid) {
+      document.getElementById('auth-error').classList.remove('hidden');
+      return;
+    }
+
+    try {
+      // Récupérer les données utilisateur
+      currentUser = pb.authStore.model;
+      console.log('👤 Utilisateur connecté:', currentUser);
+      
+      // Afficher le contenu du profil
+      document.getElementById('profile-content').classList.remove('hidden');
+      
+      // Charger les données
+      await loadUserData();
+      await loadUserEvents();
+      await loadUserParticipations();
+      
+      // Configurer les événements
+      setupEventListeners();
+      
+    } catch (error) {
+      console.error('❌ Erreur lors du chargement du profil:', error);
+      showError('Erreur lors du chargement du profil');
+    }
+  }
+
+  // Modifier la fonction loadUserData() pour s'assurer que les données sont fraîches
+  async function loadUserData() {
+    try {
+      // ✅ CORRECTION : Récupérer les données utilisateur mises à jour
+      const user = await pb.collection('users').getOne(currentUser.id, {
+        requestKey: Date.now().toString() // Éviter la mise en cache
+      });
+      
+      // Mettre à jour les informations de base
+      document.getElementById('profile-name').textContent = user.name || user.username || 'Utilisateur';
+      document.getElementById('profile-email').textContent = user.email || 'Email non défini';
+      
+      // Formater la date de création
+      const createdDate = new Date(user.created);
+      document.getElementById('profile-created').textContent = 
+        `Membre depuis ${createdDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`;
+      
+      // Charger l'avatar si disponible
+      if (user.avatar) {
+        const avatarUrl = pb.files.getUrl(user, user.avatar);
+        document.getElementById('profile-avatar').src = avatarUrl;
+      }
+      
+      // ✅ CORRECTION : Charger les orbites possédées et équipée (gérer les deux formats)
+      try {
+        if (Array.isArray(user.owned_orbits)) {
+          // PocketBase stocke déjà comme un tableau
+          userOwnedOrbits = user.owned_orbits
+          console.log("📋 Orbites récupérées comme tableau:", userOwnedOrbits)
+        } else if (typeof user.owned_orbits === 'string' && user.owned_orbits) {
+          // Stocké comme chaîne JSON
+          userOwnedOrbits = JSON.parse(user.owned_orbits)
+          console.log("📋 Orbites récupérées comme JSON:", userOwnedOrbits)
+        } else {
+          // Aucune orbite possédée
+          userOwnedOrbits = []
+          console.log("📋 Aucune orbite possédée")
+        }
+        equippedOrbit = user.equipped_orbit || '';
+      } catch (e) {
+        console.warn("⚠️ Erreur parsing owned_orbits, initialisation à []:", e.message)
+        userOwnedOrbits = [];
+        equippedOrbit = '';
+      }
+      
+      // ✅ Mettre à jour l'affichage de l'orbite équipée
+      updateEquippedOrbit();
+      
+      console.log('🛍️ Orbites possédées (données fraîches):', userOwnedOrbits);
+      console.log('⚙️ Orbite équipée (données fraîches):', equippedOrbit);
+      
+    } catch (error) {
+      console.error('❌ Erreur lors du chargement des données utilisateur:', error);
+    }
+  }
+
+  // ✅ Fonction pour mettre à jour l'affichage de l'orbite équipée
+  function updateEquippedOrbit() {
+    const container = document.getElementById('equipped-orbit-container');
+    
+    if (!equippedOrbit || equippedOrbit === 'default') {
+      // Orbite par défaut (cercle jaune)
+      container.innerHTML = `
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+          <circle cx="100" cy="100" r="95" fill="none" stroke="#fbbf24" stroke-width="4"/>
+        </svg>
+      `;
+    } else {
+      // Orbite personnalisée
+      const orbitSVG = getOrbitSVG(equippedOrbit);
+      container.innerHTML = orbitSVG;
+    }
+  }
+
+  // ✅ Fonction pour générer le SVG d'une orbite
+  function getOrbitSVG(orbitType) {
+    const orbits = {
+      'mercure': {
+        gradient: `
+          <linearGradient id="mercure-orbit-profile" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#94a3b8;stop-opacity:1" />
+            <stop offset="50%" style="stop-color:#64748b;stop-opacity:0.5" />
+            <stop offset="100%" style="stop-color:#475569;stop-opacity:1" />
+          </linearGradient>
+        `,
+        circle: 'url(#mercure-orbit-profile)',
+        planet: '#94a3b8',
+        animation: 'mercure-rotate 8s linear infinite',
+        size: 7
+      },
+      'venus': {
+        gradient: `
+          <linearGradient id="venus-orbit-profile" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:1" />
+            <stop offset="50%" style="stop-color:#f59e0b;stop-opacity:0.5" />
+            <stop offset="100%" style="stop-color:#eab308;stop-opacity:1" />
+          </linearGradient>
+        `,
+        circle: 'url(#venus-orbit-profile)',
+        planet: '#fbbf24',
+        animation: 'venus-rotate 12s linear infinite',
+        size: 8
+      },
+      'terre': {
+        gradient: `
+          <linearGradient id="terre-orbit-profile" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+            <stop offset="50%" style="stop-color:#10b981;stop-opacity:0.5" />
+            <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1" />
+          </linearGradient>
+        `,
+        circle: 'url(#terre-orbit-profile)',
+        planet: '#3b82f6',
+        animation: 'terre-rotate 15s linear infinite',
+        size: 8
+      },
+      'mars': {
+        gradient: `
+          <linearGradient id="mars-orbit-profile" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#ef4444;stop-opacity:1" />
+            <stop offset="50%" style="stop-color:#dc2626;stop-opacity:0.5" />
+            <stop offset="100%" style="stop-color:#991b1b;stop-opacity:1" />
+          </linearGradient>
+        `,
+        circle: 'url(#mars-orbit-profile)',
+        planet: '#ef4444',
+        animation: 'mars-rotate 20s linear infinite',
+        size: 7.5
+      }
+    };
+
+    const orbit = orbits[orbitType];
+    if (!orbit) return '';
+
+    return `
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+        <defs>
+          ${orbit.gradient}
+        </defs>
+        <style>
+          .${orbitType}-planet-orbit {
+            animation: ${orbit.animation};
+            transform-origin: 50% 50%;
+          }
+          @keyframes ${orbitType}-rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        </style>
+        <circle cx="100" cy="100" r="95" fill="none" stroke="${orbit.circle}" stroke-width="4"/>
+        <g class="${orbitType}-planet-orbit">
+          <circle cx="100" cy="5" r="${orbit.size}" fill="${orbit.planet}"/>
+        </g>
+      </svg>
+    `;
+  }
+
+  async function loadUserEvents() {
+    try {
+      console.log('🔍 Chargement des événements pour l\'utilisateur:', currentUser.id);
+      
+      // Récupérer les événements créés par l'utilisateur
+      const events = await pb.collection('event').getFullList({
+        filter: `users = "${currentUser.id}"`,
+        sort: '-date_event',
+        expand: 'users'
+      });
+      
+      userEvents = events;
+      console.log('📋 Événements trouvés:', userEvents.length);
+      
+      // Mettre à jour les statistiques
+      updateStatistics();
+      
+      // Afficher les événements
+      displayEvents();
+      
+    } catch (error) {
+      console.error('❌ Erreur lors du chargement des événements:', error);
+      userEvents = [];
+      displayEvents();
+    }
+  }
+
+  // ✅ CORRECTION : Fonction corrigée pour charger les participations
+  async function loadUserParticipations() {
+    try {
+      console.log('🔍 Chargement des participations pour l\'utilisateur:', currentUser.id);
+      
+      // ✅ CORRECTION : Récupérer les événements auxquels l'utilisateur participe
+      const participations = await pb.collection('event').getFullList({
+        filter: `participe ~ "${currentUser.id}"`,
+        sort: '-date_event',
+        expand: 'users'
+      });
+      
+      userParticipations = participations;
+      console.log('📋 Participations trouvées:', userParticipations.length);
+      console.log('📋 Détail des participations:', userParticipations.map(p => ({
+        id: p.id,
+        nom: p.nom_event,
+        date: p.date_event,
+        participants: p.participe?.length || 0
+      })));
+      
+      // Mettre à jour les statistiques avec les participations
+      updateStatistics();
+      
+      // Afficher les participations
+      displayParticipations();
+      
+    } catch (error) {
+      console.error('❌ Erreur lors du chargement des participations:', error);
+      userParticipations = [];
+      displayParticipations();
+    }
+  }
+
+  // ✅ CORRECTION : Fonction mise à jour pour calculer les points séparément
+  async function updateStatistics() {
+    try {
+      // Récupérer les données utilisateur FRAÎCHES depuis la base
+      const user = await pb.collection('users').getOne(currentUser.id);
+      console.log('📊 Données utilisateur fraîches pour statistiques:', user);
+      
+      const totalEvents = userEvents.length;
+      
+      // Calculer les points de participation basés sur les participations réelles
+      const totalParticipations = userParticipations.length;
+      console.log('🎭 Nombre de participations trouvées:', totalParticipations);
+
+      // Calculer les points totaux (sans déduction)
+      const theoreticalCreationPoints = totalEvents * 10;
+      const theoreticalParticipationPoints = totalParticipations * 10;
+      const totalPoints = theoreticalCreationPoints + theoreticalParticipationPoints;
+
+      console.log('📊 Calcul des points:');
+      console.log('- Points création:', theoreticalCreationPoints);
+      console.log('- Points participation:', theoreticalParticipationPoints);
+      console.log('- Total:', totalPoints);
+
+      // Mettre à jour l'affichage avec les points totaux
+      document.getElementById('stat-events').textContent = totalEvents;
+      document.getElementById('stat-creation-points').textContent = theoreticalCreationPoints;
+      document.getElementById('stat-participation-points').textContent = theoreticalParticipationPoints;
+      document.getElementById('stat-total-points').textContent = totalPoints;
+
+      // Détails dans le bloc total
+      document.getElementById('detail-creation-points').textContent = theoreticalCreationPoints;
+      document.getElementById('detail-participation-points').textContent = theoreticalParticipationPoints;
+
+      // Afficher les niveaux d'orbites débloqués
+      const totalPointsSection = document.querySelector('#stat-total-points').closest('.bg-gradient-to-r');
+      const existingLevelInfo = totalPointsSection.querySelector('.level-info');
+      if (existingLevelInfo) existingLevelInfo.remove();
+
+      // Déterminer le niveau actuel
+      let currentLevel = "Débutant";
+      let nextThreshold = 100;
+      
+      if (totalPoints >= 600) {
+        currentLevel = "Maître des Orbites";
+        nextThreshold = null;
+      } else if (totalPoints >= 400) {
+        currentLevel = "Explorateur Galactique";
+        nextThreshold = 600;
+      } else if (totalPoints >= 200) {
+        currentLevel = "Voyageur Spatial";
+        nextThreshold = 400;
+      } else if (totalPoints >= 100) {
+        currentLevel = "Apprenti Astronome";
+        nextThreshold = 200;
+      }
+
+      const levelInfo = document.createElement('div');
+      levelInfo.className = 'level-info mt-4 text-center';
+      levelInfo.innerHTML = `
+        <div class="bg-white/10 rounded-lg p-3">
+          <p class="text-indigo-200 text-sm mb-1"> Niveau actuel</p>
+          <p class="text-white font-bold">${currentLevel}</p>
+          ${nextThreshold ? `<p class="text-indigo-200 text-xs mt-1">Prochain niveau à ${nextThreshold} points</p>` : '<p class="text-yellow-200 text-xs mt-1">✨ Niveau maximum atteint !</p>'}
+        </div>
+      `;
+      totalPointsSection.appendChild(levelInfo);
+
+      document.getElementById('profile-events-count').textContent = `${totalEvents} activité${totalEvents > 1 ? 's' : ''} créée${totalEvents > 1 ? 's' : ''}`;
+
+      console.log('📊 Statistiques mises à jour:');
+      console.log('- Activités créées:', totalEvents);
+      console.log('- Participations:', totalParticipations);
+      console.log('- Points création:', theoreticalCreationPoints);
+      console.log('- Points participation:', theoreticalParticipationPoints);
+      console.log('- Total points:', totalPoints);
+      console.log('- Niveau:', currentLevel);
+    } catch (error) {
+      console.error('❌ Erreur lors de la mise à jour des statistiques:', error);
+    }
+  }
+
+  function displayEvents() {
+    const container = document.getElementById('user-events');
+    const noEventsMessage = document.getElementById('no-events');
+
+    if (userEvents.length === 0) {
+      container.innerHTML = '';
+      noEventsMessage.classList.remove('hidden');
+      return;
+    }
+
+    noEventsMessage.classList.add('hidden');
+
+    // Filtrer les événements selon le filtre actuel
+    const filteredEvents = filterEvents(userEvents);
+
+    if (filteredEvents.length === 0) {
+      container.innerHTML = `
+        <div class="text-center py-8">
+          <div class="text-4xl mb-2">🔍</div>
+          <p class="text-purple-200">Aucune activité trouvée pour ce filtre</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = filteredEvents.map(event => {
+      const eventDate = new Date(event.date_event);
+      const isUpcoming = eventDate > new Date();
+      const imageUrl = event.image_event ? pb.files.getUrl(event, event.image_event) : null;
+      
+      return `
+        <div class="relative rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition-all cursor-pointer group" onclick="window.location.href='/activities/${event.id}'">
+          <!-- Image de fond -->
+          ${imageUrl ? 
+            `<div class="absolute inset-0 bg-cover bg-center" style="background-image: url('${imageUrl}')"></div>
+             <div class="absolute inset-0 bg-black/60 group-hover:bg-black/50 transition-all"></div>` :
+            `<div class="absolute inset-0 bg-gradient-to-br from-purple-600 to-purple-800"></div>`
+          }
+          
+          <!-- Contenu -->
+          <div class="relative z-10 p-6">
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="text-2xl">${getCategoryIcon(event.categorie_event)}</span>
+                  <h3 class="text-xl font-bold text-white truncate">${event.nom_event}</h3>
+                </div>
+                <span class="px-3 py-1 rounded-full text-xs font-medium ${isUpcoming ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-200'}">
+                  ${isUpcoming ? '🟢 À venir' : '🔴 Passée'}
+                </span>
+              </div>
+            </div>
+            
+            <div class="space-y-2 text-sm text-white/90 mb-4">
+              <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>${eventDate.toLocaleDateString('fr-FR', { 
+                  day: 'numeric', 
+                  month: 'long', 
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}</span>
+              </div>
+              
+              <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>${event.lieu_event}</span>
+              </div>
+              
+              <div class="flex items-center gap-4">
+                <div class="flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                  <span>${event.nb_users_max} max</span>
+                </div>
+                
+                <div class="flex items-center gap-1">
+                  <span>✅</span>
+                  <span>+10 pts (création)</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="flex items-center justify-between">
+              <span class="px-3 py-1 bg-purple-600/80 text-white text-xs rounded-full">
+                ${event.categorie_event}
+              </span>
+              
+              <button 
+                onclick="event.stopPropagation(); deleteEvent('${event.id}', '${event.nom_event}')"
+                class="px-3 py-1 bg-red-600/80 hover:bg-red-700 text-white text-xs rounded-full transition-all"
+              >
+                 Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function displayParticipations() {
+    const container = document.getElementById('user-participations');
+    const noParticipationsMessage = document.getElementById('no-participations');
+
+    if (userParticipations.length === 0) {
+      container.innerHTML = '';
+      noParticipationsMessage.classList.remove('hidden');
+      return;
+    }
+
+    noParticipationsMessage.classList.add('hidden');
+
+    // Filtrer les participations selon le filtre actuel
+    const filteredParticipations = filterParticipations(userParticipations);
+
+    if (filteredParticipations.length === 0) {
+      container.innerHTML = `
+        <div class="text-center py-8">
+          <div class="text-4xl mb-2">🔍</div>
+          <p class="text-purple-200">Aucune participation trouvée pour ce filtre</p>
+        </div>
+      `;
+      return;
+    }
+
+    const now = new Date();
+
+    container.innerHTML = filteredParticipations.map(event => {
+      const eventDate = new Date(event.date_event);
+      const isUpcoming = eventDate > now;
+      const imageUrl = event.image_event ? pb.files.getUrl(event, event.image_event) : null;
+      
+      // ✅ Déterminer le statut des points
+      const pointsStatus = isUpcoming ? 
+        { text: '+10 pts de participation ', class: 'text-yellow-400', icon: '✅' } :
+        { text: '+10 pts (reçus)', class: 'text-green-400', icon: '✅' };
+      
+      return `
+        <div class="relative rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition-all cursor-pointer group" onclick="window.location.href='/activities/${event.id}'">
+          <!-- Image de fond -->
+          ${imageUrl ? 
+            `<div class="absolute inset-0 bg-cover bg-center" style="background-image: url('${imageUrl}')"></div>
+             <div class="absolute inset-0 bg-black/60 group-hover:bg-black/50 transition-all"></div>` :
+            `<div class="absolute inset-0 bg-gradient-to-br from-purple-600 to-purple-800"></div>`
+          }
+          
+          <!-- Contenu -->
+          <div class="relative z-10 p-6">
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="text-2xl">${getCategoryIcon(event.categorie_event)}</span>
+                  <h3 class="text-xl font-bold text-white truncate">${event.nom_event}</h3>
+                </div>
+                <span class="px-3 py-1 rounded-full text-xs font-medium ${isUpcoming ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-200'}">
+                  ${isUpcoming ? '🟢 À venir' : '🔴 Passée'}
+                </span>
+              </div>
+            </div>
+            
+            <div class="space-y-2 text-sm text-white/90 mb-4">
+              <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>${eventDate.toLocaleDateString('fr-FR', { 
+                  day: 'numeric', 
+                  month: 'long', 
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}</span>
+              </div>
+              
+              <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>${event.lieu_event}</span>
+              </div>
+              
+              <div class="flex items-center gap-1">
+                <span class="${pointsStatus.class}">${pointsStatus.icon}</span>
+                <span class="${pointsStatus.class}">${pointsStatus.text}</span>
+              </div>
+            </div>
+            
+            <div class="flex items-center justify-between">
+              <span class="px-3 py-1 bg-purple-600/80 text-white text-xs rounded-full">
+                ${event.categorie_event}
+              </span>
+              
+              ${isUpcoming ? `
+                <button 
+                  onclick="event.stopPropagation(); leaveEvent('${event.id}', '${event.nom_event}')"
+                  class="px-3 py-1 bg-red-600/80 hover:bg-red-700 text-white text-xs rounded-full transition-all"
+                >
+                  🚪 Quitter
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function filterParticipations(participations) {
+    const now = new Date();
+
+    switch (currentParticipationFilter) {
+      case 'upcoming':
+        return participations.filter(event => new Date(event.date_event) > now);
+      case 'past':
+        return participations.filter(event => new Date(event.date_event) <= now);
+      default:
+        return participations;
+    }
+  }
+
+  async function leaveEvent(eventId, eventName) {
+    if (!confirm(`Êtes-vous sûr de vouloir quitter l'activité "${eventName}" ?`)) {
+      return;
+    }
+
+    try {
+      // Récupérer l'événement actuel
+      const event = await pb.collection('event').getOne(eventId);
+
+      // Retirer l'utilisateur de la liste des participants
+      const currentParticipants = event.participe || [];
+      const updatedParticipants = currentParticipants.filter(id => id !== currentUser.id);
+
+      // Mettre à jour l'événement
+      await pb.collection('event').update(eventId, {
+        participe: updatedParticipants
+      });
+
+      // Recharger les participations
+      await loadUserParticipations();
+
+      showSuccess('Vous avez quitté l\'activité avec succès !');
+
+    } catch (error) {
+      console.error('❌ Erreur lors de la sortie de l\'événement:', error);
+      showError('Erreur lors de la sortie de l\'activité');
+    }
+  }
+
+  function filterEvents(events) {
+    const now = new Date();
+
+    switch (currentFilter) {
+      case 'upcoming':
+        return events.filter(event => new Date(event.date_event) > now);
+      case 'past':
+        return events.filter(event => new Date(event.date_event) <= now);
+      default:
+        return events;
+    }
+  }
+
+  function getCategoryIcon(category) {
+    const icons = {
+      'sport': '⚽',
+      'soirée': '🎉',
+      'cinéma': '🎬',
+      'jeux': '🎮',
+      'musique': '🎵',
+      'chill': '😌',
+      'voyages': '✈️',
+      'études': '📚',
+      'resto': '🍽️',
+      'rencontres': '👥',
+      'cuisine': '👨‍🍳',
+      'shopping': '🛍️',
+      'culture': '🎭',
+      'bien-être': '🧘',
+      'bénévolat': '🤝'
+    };
+    return icons[category?.toLowerCase()] || '🌟';
+  }
+
+  function setupEventListeners() {
+    // Filtres d'événements
+    document.getElementById('filter-all').addEventListener('click', () => setFilter('all'));
+    document.getElementById('filter-upcoming').addEventListener('click', () => setFilter('upcoming'));
+    document.getElementById('filter-past').addEventListener('click', () => setFilter('past'));
+
+    // Filtres de participation
+    document.getElementById('participation-filter-all').addEventListener('click', () => setParticipationFilter('all'));
+    document.getElementById('participation-filter-upcoming').addEventListener('click', () => setParticipationFilter('upcoming'));
+    document.getElementById('participation-filter-past').addEventListener('click', () => setParticipationFilter('past'));
+
+    // Modification du nom
+    document.getElementById('edit-name-btn').addEventListener('click', openNameModal);
+    document.getElementById('cancel-name-btn').addEventListener('click', closeNameModal);
+    document.getElementById('save-name-btn').addEventListener('click', saveName);
+
+    // Changement d'avatar
+    document.getElementById('change-avatar-btn').addEventListener('click', () => {
+      document.getElementById('avatar-input').click();
+    });
+
+    document.getElementById('avatar-input').addEventListener('change', handleAvatarChange);
+
+    // ✅ Changement d'orbite
+    document.getElementById('change-orbit-btn').addEventListener('click', openOrbitModal);
+    document.getElementById('cancel-orbit-btn').addEventListener('click', closeOrbitModal);
+    document.getElementById('equip-orbit-btn').addEventListener('click', equipSelectedOrbit);
+
+    // ✅ Sélection d'orbite dans le modal
+    document.querySelectorAll('.orbit-option').forEach(option => {
+      option.addEventListener('click', () => {
+        // Retirer la sélection précédente
+        document.querySelectorAll('.orbit-option').forEach(opt => {
+          opt.classList.remove('border-purple-500', 'bg-purple-50');
+          opt.classList.add('border-transparent');
+        });
+
+        // Sélectionner la nouvelle orbite
+        option.classList.remove('border-transparent');
+        option.classList.add('border-purple-500', 'bg-purple-50');
+
+        selectedOrbit = option.dataset.orbit;
+        document.getElementById('equip-orbit-btn').disabled = false;
+      });
+    });
+  }
+
+  // ✅ Fonctions pour le modal d'orbite
+  function openOrbitModal() {
+    // Mettre à jour l'état des orbites dans le modal
+    updateOrbitModal();
+    document.getElementById('orbit-modal').classList.remove('hidden');
+  }
+
+  function closeOrbitModal() {
+    selectedOrbit = null;
+    document.getElementById('orbit-modal').classList.add('hidden');
+    document.getElementById('equip-orbit-btn').disabled = true;
+    
+    // Retirer toutes les sélections
+    document.querySelectorAll('.orbit-option').forEach(opt => {
+      opt.classList.remove('border-purple-500', 'bg-purple-50');
+      opt.classList.add('border-transparent');
+    });
+  }
+
+  // Modifier la fonction updateOrbitModal() pour corriger l'affichage des orbites possédées
+  function updateOrbitModal() {
+    // ✅ CORRECTION : Récupérer les données utilisateur FRAÎCHES
+    pb.collection('users').getOne(currentUser.id).then(user => {
+      // ✅ CORRECTION : Récupérer les orbites possédées (gérer les deux formats)
+      try {
+        if (Array.isArray(user.owned_orbits)) {
+          // PocketBase stocke déjà comme un tableau
+          userOwnedOrbits = user.owned_orbits
+          console.log("📋 Orbites récupérées comme tableau:", userOwnedOrbits)
+        } else if (typeof user.owned_orbits === 'string' && user.owned_orbits) {
+          // Stocké comme chaîne JSON
+          userOwnedOrbits = JSON.parse(user.owned_orbits)
+          console.log("📋 Orbites récupérées comme JSON:", userOwnedOrbits)
+        } else {
+          // Aucune orbite possédée
+          userOwnedOrbits = []
+          console.log("📋 Aucune orbite possédée")
+        }
+        equippedOrbit = user.equipped_orbit || '';
+        console.log('🔄 Orbites mises à jour dans le modal:', userOwnedOrbits);
+      } catch (e) {
+        console.error('❌ Erreur parsing orbites:', e);
+        userOwnedOrbits = [];
+        equippedOrbit = '';
+      }
+      
+      document.querySelectorAll('.orbit-option').forEach(option => {
+        const orbitType = option.dataset.orbit;
+        
+        if (orbitType === 'default' || userOwnedOrbits.includes(orbitType)) {
+          // L'utilisateur peut utiliser cette orbite
+          option.classList.remove('opacity-50', 'cursor-not-allowed');
+          option.classList.add('cursor-pointer');
+          
+          // Supprimer l'indicateur "verrouillé" s'il existe
+          const lockedIndicator = option.querySelector('.locked-indicator');
+          if (lockedIndicator) lockedIndicator.remove();
+          
+          // Marquer l'orbite actuellement équipée
+          if ((orbitType === 'default' && !equippedOrbit) || orbitType === equippedOrbit) {
+            option.classList.add('border-green-500', 'bg-green-50');
+            option.classList.remove('border-transparent');
+            
+            // Ajouter un indicateur "équipé"
+            if (!option.querySelector('.equipped-indicator')) {
+              const indicator = document.createElement('div');
+              indicator.className = 'equipped-indicator absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full';
+              indicator.textContent = '✓ Équipé';
+              option.style.position = 'relative';
+              option.appendChild(indicator);
+            }
+          } else {
+            option.classList.remove('border-green-500', 'bg-green-50');
+            const indicator = option.querySelector('.equipped-indicator');
+            if (indicator) indicator.remove();
+          }
+        } else {
+          // L'utilisateur ne possède pas cette orbite
+          option.classList.add('opacity-50', 'cursor-not-allowed');
+          option.classList.remove('cursor-pointer');
+          
+          // Ajouter un indicateur "non possédé"
+          if (!option.querySelector('.locked-indicator')) {
+            const indicator = document.createElement('div');
+            indicator.className = 'locked-indicator absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full';
+            indicator.textContent = '🔒';
+            option.style.position = 'relative';
+            option.appendChild(indicator);
+          }
+        }
+      });
+    }).catch(error => {
+      console.error('❌ Erreur lors de la récupération des données utilisateur pour le modal:', error);
+    });
+  }
+
+  async function equipSelectedOrbit() {
+    if (!selectedOrbit) return;
+
+    const equipBtn = document.getElementById('equip-orbit-btn');
+    equipBtn.disabled = true;
+    equipBtn.textContent = 'Équipement...';
+
+    try {
+      // Vérifier que l'utilisateur est toujours authentifié
+      if (!pb.authStore.isValid) {
+        throw new Error('Session expirée, veuillez vous reconnecter');
+      }
+      
+      console.log('⚙️ Tentative d\'équipement:', {
+        orbit: selectedOrbit,
+        userId: currentUser.id,
+        token: pb.authStore.token ? 'présent' : 'absent'
+      });
+
+      const response = await fetch('/api/shop/equip', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${pb.authStore.token}`
+        },
+        body: JSON.stringify({
+          orbitType: selectedOrbit
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Erreur HTTP:', response.status, errorText);
+        throw new Error(`Erreur ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Mettre à jour l'orbite équipée localement
+        equippedOrbit = result.equippedOrbit;
+        
+        // Mettre à jour l'affichage
+        updateEquippedOrbit();
+        
+        // Afficher le succès
+        showSuccess(result.message);
+        
+        // Fermer le modal
+        closeOrbitModal();
+      } else {
+        showError(result.message);
+      }
+
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'équipement:', error);
+      showError(error.message || 'Erreur lors de l\'équipement');
+    } finally {
+      equipBtn.disabled = false;
+      equipBtn.textContent = 'Équiper';
+    }
+  }
+
+  function setFilter(filter) {
+    currentFilter = filter;
+
+    // Mettre à jour l'apparence des boutons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.classList.remove('active');
+      btn.classList.add('bg-white/10');
+      btn.classList.remove('bg-white/20');
+    });
+
+    document.getElementById(`filter-${filter}`).classList.add('active', 'bg-white/20');
+    document.getElementById(`filter-${filter}`).classList.remove('bg-white/10');
+
+    // Réafficher les événements
+    displayEvents();
+  }
+
+  function setParticipationFilter(filter) {
+    currentParticipationFilter = filter;
+
+    // Mettre à jour l'apparence des boutons
+    document.querySelectorAll('.participation-filter-btn').forEach(btn => {
+      btn.classList.remove('active');
+      btn.classList.add('bg-white/10');
+      btn.classList.remove('bg-white/20');
+    });
+
+    document.getElementById(`participation-filter-${filter}`).classList.add('active', 'bg-white/20');
+    document.getElementById(`participation-filter-${filter}`).classList.remove('bg-white/10');
+
+    // Réafficher les participations
+    displayParticipations();
+  }
+
+  function openNameModal() {
+    document.getElementById('new-name-input').value = currentUser.name || currentUser.username || '';
+    document.getElementById('name-modal').classList.remove('hidden');
+  }
+
+  function closeNameModal() {
+    document.getElementById('name-modal').classList.add('hidden');
+  }
+
+  async function saveName() {
+    const newName = document.getElementById('new-name-input').value.trim();
+
+    if (!newName) {
+      showError('Le nom ne peut pas être vide');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('name', newName);
+      
+      const updatedUser = await pb.collection('users').update(currentUser.id, formData);
+      
+      // Mettre à jour le store d'authentification
+      pb.authStore.save(pb.authStore.token, updatedUser);
+      currentUser = updatedUser;
+      
+      // Mettre à jour l'affichage
+      document.getElementById('profile-name').textContent = newName;
+      
+      closeNameModal();
+      showSuccess('Nom mis à jour avec succès !');
+      
+    } catch (error) {
+      console.error('❌ Erreur lors de la mise à jour du nom:', error);
+      showError('Erreur lors de la mise à jour du nom');
+    }
+  }
+
+  async function handleAvatarChange(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Vérifier le type de fichier
+    if (!file.type.startsWith('image/')) {
+      showError('Veuillez sélectionner une image valide');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+      
+      const updatedUser = await pb.collection('users').update(currentUser.id, formData);
+      
+      // Mettre à jour le store d'authentification
+      pb.authStore.save(pb.authStore.token, updatedUser);
+      currentUser = updatedUser;
+      
+      // Mettre à jour l'affichage
+      const avatarUrl = pb.files.getUrl(updatedUser, updatedUser.avatar);
+      document.getElementById('profile-avatar').src = avatarUrl;
+      
+      showSuccess('Photo de profil mise à jour !');
+      
+    } catch (error) {
+      console.error('❌ Erreur lors de la mise à jour de l\'avatar:', error);
+      showError('Erreur lors de la mise à jour de la photo');
+    }
+  }
+
+  async function deleteEvent(eventId, eventName) {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer l'activité "${eventName}" ?`)) {
+      return;
+    }
+
+    try {
+      await pb.collection('event').delete(eventId);
+      
+      // Recharger les événements
+      await loadUserEvents();
+      
+      showSuccess('Activité supprimée avec succès !');
+      
+    } catch (error) {
+      console.error('❌ Erreur lors de la suppression:', error);
+      showError('Erreur lors de la suppression de l\'activité');
+    }
+  }
+
+  function editEvent(eventId) {
+    // Rediriger vers une page d'édition (à implémenter)
+    window.location.href = `/activities/${eventId}/edit`;
+  }
+
+  function showSuccess(message) {
+    const successEl = document.getElementById('success-message');
+    const textEl = document.getElementById('success-text');
+
+    textEl.textContent = message;
+    successEl.classList.remove('translate-x-full');
+
+    setTimeout(() => {
+      successEl.classList.add('translate-x-full');
+    }, 3000);
+  }
+
+  function showError(message) {
+    const errorEl = document.getElementById('error-message');
+    const textEl = document.getElementById('error-text');
+
+    textEl.textContent = message;
+    errorEl.classList.remove('translate-x-full');
+
+    setTimeout(() => {
+      errorEl.classList.add('translate-x-full');
+    }, 3000);
+  }
+
+  // Rendre les fonctions globales pour les boutons
+  window.editEvent = editEvent;
+  window.deleteEvent = deleteEvent;
+  window.leaveEvent = leaveEvent;
+</script>
+
+<style>
+  .filter-btn.active {
+    background: rgba(255, 255, 255, 0.2) !important;
+    transform: scale(1.05);
+  }
+
+  .filter-btn {
+    transition: all 0.3s ease;
+  }
+
+  .filter-btn:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    transform: scale(1.02);
+  }
+
+  .participation-filter-btn.active {
+    background: rgba(255, 255, 255, 0.2) !important;
+    transform: scale(1.05);
+  }
+
+  .participation-filter-btn {
+    transition: all 0.3s ease;
+  }
+
+  .participation-filter-btn:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    transform: scale(1.02);
+  }
+
+  /* ✅ Styles pour les animations d'orbites */
+  .mercure-planet-orbit {
+    animation: mercure-rotate 8s linear infinite;
+    transform-origin: 50% 50%;
+  }
+
+  .venus-planet-orbit {
+    animation: venus-rotate 12s linear infinite;
+    transform-origin: 50% 50%;
+  }
+
+  .terre-planet-orbit {
+    animation: terre-rotate 15s linear infinite;
+    transform-origin: 50% 50%;
+  }
+
+  .mars-planet-orbit {
+    animation: mars-rotate 20s linear infinite;
+    transform-origin: 50% 50%;
+  }
+
+  @keyframes mercure-rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes venus-rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes terre-rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes mars-rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* Hover effect pour le bouton de changement d'orbite */
+  #change-orbit-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+</style>

@@ -1,0 +1,144 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import HeaderDashboard from '../../components/HeaderDashboard.astro';
+import FooterDashboard from '../../components/FooterDashboard.astro';
+---
+
+<Layout title="Debug PocketBase - Orbite">
+  <HeaderDashboard />
+
+  <div class="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 pt-20">
+    <div class="max-w-4xl mx-auto px-4 py-8">
+      <h1 class="text-3xl font-bold text-white mb-8 text-center">
+        🔧 Diagnostic PocketBase
+      </h1>
+      
+      <div class="bg-white/10 backdrop-blur-sm rounded-xl p-8 border border-white/20 shadow-2xl">
+        <div id="debug-results" class="space-y-4">
+          <div class="text-white">Chargement des diagnostics...</div>
+        </div>
+        
+        <button 
+          id="run-debug" 
+          class="mt-6 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all"
+        >
+          🔄 Relancer les tests
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <FooterDashboard />
+</Layout>
+
+<script>
+  import PocketBase from 'pocketbase';
+  
+  const pb = new PocketBase('http://127.0.0.1:8090');
+  
+  async function runDiagnostics() {
+    const resultsDiv = document.getElementById('debug-results');
+    if (!resultsDiv) return;
+    
+    resultsDiv.innerHTML = '<div class="text-yellow-400">🔍 Exécution des diagnostics...</div>';
+    
+    const results = [];
+    
+    // Test 1: Connexion à PocketBase
+    try {
+      const health = await pb.health.check();
+      results.push(`<div class="text-green-400">✅ PocketBase accessible: ${JSON.stringify(health)}</div>`);
+    } catch (error) {
+      results.push(`<div class="text-red-400">❌ PocketBase inaccessible: ${error.message}</div>`);
+    }
+    
+    // Test 2: Authentification
+    try {
+      const isAuth = pb.authStore.isValid;
+      const user = pb.authStore.model;
+      results.push(`<div class="text-${isAuth ? 'green' : 'red'}-400">${isAuth ? '✅' : '❌'} Authentification: ${isAuth ? 'Connecté' : 'Non connecté'}</div>`);
+      if (user) {
+        results.push(`<div class="text-blue-400">👤 Utilisateur: ${user.email || user.username} (ID: ${user.id})</div>`);
+      }
+    } catch (error) {
+      results.push(`<div class="text-red-400">❌ Erreur auth: ${error.message}</div>`);
+    }
+    
+    // Test 3: Collections disponibles
+    try {
+      const collections = await pb.collections.getFullList();
+      results.push(`<div class="text-green-400">✅ Collections trouvées: ${collections.length}</div>`);
+      results.push(`<div class="text-blue-400">📚 Collections: ${collections.map(c => c.name).join(', ')}</div>`);
+      
+      // Vérifier si la collection 'event' existe
+      const eventCollection = collections.find(c => c.name === 'event');
+      if (eventCollection) {
+        results.push(`<div class="text-green-400">✅ Collection 'event' trouvée</div>`);
+        results.push(`<div class="text-blue-400">📋 Schéma event: ${JSON.stringify(eventCollection.schema?.map(f => f.name) || 'Non disponible')}</div>`);
+      } else {
+        results.push(`<div class="text-red-400">❌ Collection 'event' non trouvée</div>`);
+      }
+    } catch (error) {
+      results.push(`<div class="text-red-400">❌ Erreur collections: ${error.message}</div>`);
+    }
+    
+    // Test 4: Permissions de la collection event
+    if (pb.authStore.isValid) {
+      try {
+        // Essayer de récupérer les événements
+        const events = await pb.collection('event').getList(1, 1);
+        results.push(`<div class="text-green-400">✅ Lecture events: ${events.totalItems} événements trouvés</div>`);
+      } catch (error) {
+        results.push(`<div class="text-red-400">❌ Erreur lecture events: ${error.message}</div>`);
+      }
+      
+      // Test de création (avec données minimales)
+      try {
+        const testData = {
+          nom_event: 'Test Debug',
+          description_event: 'Test de diagnostic',
+          date_event: new Date().toISOString(),
+          categorie_event: 'Test',
+          lieu_event: 'Test',
+          nb_users_max: 1,
+          nb_points_gagne: 0,
+          user: pb.authStore.model.id,
+          date_pub_event: new Date().toISOString(),
+          location: JSON.stringify({ lat: 47.5101, lng: 6.7988 })
+        };
+        
+        // Ne pas vraiment créer, juste tester la validation
+        results.push(`<div class="text-blue-400">🧪 Test de données prêt (non exécuté)</div>`);
+        results.push(`<div class="text-gray-400">📝 Données test: ${JSON.stringify(testData, null, 2)}</div>`);
+        
+      } catch (error) {
+        results.push(`<div class="text-red-400">❌ Erreur préparation test: ${error.message}</div>`);
+      }
+    }
+    
+    // Test 5: Variables d'environnement et configuration
+    results.push(`<div class="text-blue-400">🌐 URL PocketBase: ${pb.baseUrl}</div>`);
+    results.push(`<div class="text-blue-400">🔗 URL actuelle: ${window.location.href}</div>`);
+    
+    resultsDiv.innerHTML = results.join('');
+  }
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    runDiagnostics();
+    
+    document.getElementById('run-debug')?.addEventListener('click', () => {
+      runDiagnostics();
+    });
+  });
+</script>
+
+<style>
+  pre {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+</style>

@@ -1,0 +1,434 @@
+---
+import Layout from '../layouts/Layout.astro';
+import HeaderDashboard from '../components/HeaderDashboard.astro';
+import { getAllEvents } from '../lib/pocketbase';
+
+// Récupérer tous les événements avec leurs coordonnées
+const events = await getAllEvents();
+
+// Filtrer les événements qui ont des coordonnées valides
+const eventsWithLocation = events.filter(event => {
+  if (!event.location) return false;
+  
+  try {
+    const location = typeof event.location === 'string' 
+      ? JSON.parse(event.location) 
+      : event.location;
+    return location && location.lat && location.lng;
+  } catch {
+    return false;
+  }
+});
+
+console.log(`📍 ${eventsWithLocation.length} événements avec localisation trouvés`);
+---
+
+<Layout title="Carte - Orbite">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""/>
+  
+  <HeaderDashboard />
+  
+  <!-- Container pour la carte qui prend tout l'espace disponible -->
+  <div class="relative">
+    <!-- Carte Leaflet -->
+    <div id="map" class="w-full h-screen pt-20"></div>
+    
+    <!-- Légende -->
+    <div class="absolute bottom-20 left-4 z-[1000] bg-purple-950/90 backdrop-blur-sm rounded-xl p-4 border border-purple-700/50 shadow-xl">
+      <h3 class="text-white font-bold text-sm mb-2">💡 Interactions</h3>
+      <div class="space-y-1 text-xs text-purple-200">
+        <div>🖱️ Survolez un pin pour voir les détails</div>
+        <div>👆 Cliquez pour accéder à l'événement</div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<!-- Leaflet JavaScript -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+
+<script define:vars={{ eventsWithLocation }}>
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Coordonnées de Montbéliard (centre par défaut)
+    const montbeliardCoords = [47.5109, 6.7989];
+    
+    // Initialiser la carte
+    const map = L.map('map', {
+      center: montbeliardCoords,
+      zoom: 13,
+      zoomControl: true,
+      attributionControl: true
+    });
+
+    // Ajouter les tuiles de la carte
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    }).addTo(map);
+
+    // Fonction pour obtenir l'icône de catégorie
+    function getCategoryIcon(category) {
+      const icons = {
+        'sport': '🌍',
+        'soirée': '🎉',
+        'cinéma': '🎬',
+        'jeux': '🎮',
+        'musique': '🎵',
+        'chill': '😌',
+        'voyages': '✈️',
+        'études': '📚',
+        'resto': '🍽️',
+        'rencontres': '👥',
+        'cuisine': '👨‍🍳',
+        'shopping': '🛍️',
+        'culture': '🎭',
+        'bien-être': '🧘',
+        'conférence': '🎤',
+        'atelier': '🛠️',
+        'divers': '📦'
+      };
+      return icons[category?.toLowerCase()] || '🌟';
+    }
+
+    // Fonction pour formater la date
+    function formatDate(dateString) {
+      try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('fr-FR', {
+          day: 'numeric',
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      } catch {
+        return 'Date non définie';
+      }
+    }
+
+    // Créer l'icône personnalisée avec le logo Orbite
+    const orbiteIcon = L.divIcon({
+      className: 'custom-orbite-marker',
+      html: `
+        <div class="orbite-marker-container">
+          <div class="orbite-marker-pulse"></div>
+          <img src="/images/logo-orbite.svg" alt="Orbite" class="orbite-marker-logo" />
+        </div>
+      `,
+      iconSize: [50, 50],
+      iconAnchor: [25, 50],
+      popupAnchor: [0, -60]
+    });
+
+    // Groupe de marqueurs pour gérer les clusters si nécessaire
+    const markers = [];
+
+    // Ajouter un marqueur pour chaque événement
+    eventsWithLocation.forEach(event => {
+      try {
+        // Parser les coordonnées
+        const location = typeof event.location === 'string' 
+          ? JSON.parse(event.location) 
+          : event.location;
+        
+        if (!location || !location.lat || !location.lng) {
+          console.warn('Coordonnées invalides pour l\'événement:', event.id);
+          return;
+        }
+
+        const lat = parseFloat(location.lat);
+        const lng = parseFloat(location.lng);
+
+        if (isNaN(lat) || isNaN(lng)) {
+          console.warn('Coordonnées non numériques pour l\'événement:', event.id);
+          return;
+        }
+
+        // Créer le marqueur
+        const marker = L.marker([lat, lng], { 
+          icon: orbiteIcon,
+          title: event.nom_event
+        }).addTo(map);
+
+        // Créer le contenu du popup
+        const popupContent = `
+          <div class="orbite-popup-event">
+            <div class="flex items-start space-x-3 p-2">
+              <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                  <span class="text-lg">${getCategoryIcon(event.categorie_event)}</span>
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h3 class="font-bold text-purple-900 text-base leading-tight mb-1">
+                  ${event.nom_event || 'Événement sans nom'}
+                </h3>
+                <div class="space-y-1 text-xs text-gray-600">
+                  <div class="flex items-center">
+                    <span class="mr-1">📅</span>
+                    <span>${formatDate(event.date_event)}</span>
+                  </div>
+                  <div class="flex items-center">
+                    <span class="mr-1">📍</span>
+                    <span>${event.lieu_event || 'Lieu non spécifié'}</span>
+                  </div>
+                  <div class="flex items-center">
+                    <span class="mr-1">👥</span>
+                    <span>${event.nb_users_max || 0} participants max</span>
+                  </div>
+                  ${event.nb_points_gagne ? `
+                    <div class="flex items-center">
+                      <span class="mr-1">⭐</span>
+                      <span class="text-yellow-600 font-medium">${event.nb_points_gagne} points</span>
+                    </div>
+                  ` : ''}
+                </div>
+                
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Ajouter le popup
+        marker.bindPopup(popupContent, {
+          maxWidth: 280,
+          className: 'orbite-popup-container-event',
+          offset: [0, -10]
+        });
+
+        // Ajouter les événements hover - afficher le grand popup au survol
+        marker.on('mouseover', function() {
+          // Ouvrir le popup au survol
+          marker.openPopup();
+
+          // Effet visuel sur le marqueur
+          const markerElement = marker.getElement();
+          if (markerElement) {
+            const logo = markerElement.querySelector('.orbite-marker-logo');
+            if (logo) {
+              logo.style.transform = 'scale(1.2)';
+              logo.style.filter = 'drop-shadow(0 0 10px rgba(147, 51, 234, 0.8))';
+            }
+          }
+        });
+
+        marker.on('mouseout', function() {
+          // Fermer le popup quand on quitte le survol
+          marker.closePopup();
+
+          // Reset de l'effet visuel
+          const markerElement = marker.getElement();
+          if (markerElement) {
+            const logo = markerElement.querySelector('.orbite-marker-logo');
+            if (logo) {
+              logo.style.transform = 'scale(1)';
+              logo.style.filter = 'none';
+            }
+          }
+        });
+
+        // Ajouter l'événement click - redirection immédiate
+        marker.on('click', function() {
+          // Redirection immédiate vers la page de détail
+          window.location.href = `/activities/${event.id}`;
+        });
+
+        markers.push(marker);
+
+      } catch (error) {
+        console.error('Erreur lors de la création du marqueur pour l\'événement:', event.id, error);
+      }
+    });
+
+    // Ajuster la vue pour inclure tous les marqueurs
+    if (markers.length > 0) {
+      const group = new L.featureGroup(markers);
+      map.fitBounds(group.getBounds().pad(0.1));
+      
+      // Limiter le zoom maximum
+      if (map.getZoom() > 15) {
+        map.setZoom(15);
+      }
+    }
+
+    // Ajouter des contrôles personnalisés
+    const customControl = L.control({ position: 'bottomright' });
+    customControl.onAdd = function(map) {
+      const div = L.DomUtil.create('div', 'custom-control');
+      div.innerHTML = `
+        <div class="bg-white/90 backdrop-blur-sm rounded-lg p-2 border border-gray-300 shadow-lg">
+          <div class="flex items-center space-x-2 text-gray-700 text-sm">
+            <span class="text-purple-600">🎯</span>
+            <span>Zoom: <span id="zoom-level">${map.getZoom()}</span></span>
+          </div>
+        </div>
+      `;
+      return div;
+    };
+    customControl.addTo(map);
+
+    // Mettre à jour le niveau de zoom
+    map.on('zoomend', function() {
+      const zoomLevel = document.getElementById('zoom-level');
+      if (zoomLevel) {
+        zoomLevel.textContent = map.getZoom();
+      }
+    });
+
+    console.log(`✅ ${markers.length} marqueurs ajoutés à la carte`);
+  });
+</script>
+
+<style>
+  /* Styles pour le marqueur personnalisé */
+  .orbite-marker-container {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .orbite-marker-pulse {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(147, 51, 234, 0.3);
+    animation: pulse 2s infinite;
+    z-index: 1;
+  }
+
+  .orbite-marker-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: white;
+    padding: 5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    z-index: 2;
+    position: relative;
+    cursor: pointer;
+  }
+
+  @keyframes pulse {
+    0% {
+      transform: scale(0.8);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.2);
+      opacity: 0.5;
+    }
+    100% {
+      transform: scale(0.8);
+      opacity: 1;
+    }
+  }
+
+  /* Styles pour le popup des événements */
+  .orbite-popup-container-event .leaflet-popup-content-wrapper {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    border: 2px solid rgba(147, 51, 234, 0.3);
+    padding: 0 !important;
+    overflow: hidden;
+  }
+
+  .orbite-popup-container-event .leaflet-popup-content {
+    margin: 0 !important;
+    line-height: 1.4;
+  }
+
+  .orbite-popup-container-event .leaflet-popup-tip {
+    background: white;
+    border: 2px solid rgba(147, 51, 234, 0.3);
+  }
+
+  .orbite-popup-event {
+    min-width: 250px;
+  }
+
+  /* Personnalisation des contrôles Leaflet */
+  .leaflet-control-zoom a {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #374151 !important;
+    border: 1px solid rgba(209, 213, 219, 0.8) !important;
+    backdrop-filter: blur(10px);
+  }
+
+  .leaflet-control-zoom a:hover {
+    background: rgba(147, 51, 234, 0.1) !important;
+    transform: scale(1.05);
+    border-color: rgba(147, 51, 234, 0.3) !important;
+  }
+
+  .leaflet-control-attribution {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #374151 !important;
+    backdrop-filter: blur(10px);
+    border-radius: 6px !important;
+    border: 1px solid rgba(209, 213, 219, 0.8) !important;
+  }
+
+  .leaflet-control-attribution a {
+    color: #7c3aed !important;
+  }
+
+  /* Assurer que la carte prend tout l'espace */
+  #map {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+  }
+
+  /* Le header doit être au-dessus de la carte */
+  header {
+    position: relative;
+    z-index: 1001;
+  }
+
+  /* Style pour le contrôle personnalisé */
+  .custom-control {
+    pointer-events: auto;
+  }
+
+  /* Animation d'apparition pour l'overlay */
+  .absolute.bottom-20.left-4 {
+    animation: slideInLeft 0.5s ease-out;
+  }
+
+  @keyframes slideInLeft {
+    from {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  /* Responsive pour mobile */
+  @media (max-width: 768px) {
+    .absolute.bottom-20.left-4 {
+      left: 1rem;
+      right: 1rem;
+      width: auto;
+    }
+    
+    .orbite-popup-event {
+      min-width: 200px;
+    }
+  }
+</style>

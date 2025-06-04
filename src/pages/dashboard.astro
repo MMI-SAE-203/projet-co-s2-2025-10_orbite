@@ -1,0 +1,188 @@
+---
+import Layout from '../layouts/Layout.astro';
+import HeaderDashboard from '../components/HeaderDashboard.astro';
+import FooterDashboard from '../components/FooterDashboard.astro';
+---
+
+<Layout title="Accueil - Orbite Dashboard">
+  <HeaderDashboard />
+  
+  <main class="min-h-screen bg-gradient-to-b from-purple-950 via-purple-900 to-black">
+    
+    <!-- Hero Section avec illustration -->
+    <section class="relative pt-24 md:pt-32 pb-16 px-4">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <!-- Contenu texte -->
+          <div class="text-white space-y-6 order-2 lg:order-1">
+            <h1 class="text-2xl md:text-4xl lg:text-5xl font-bold leading-tight">
+              Orbite, c'est la plateforme créée par les étudiants, pour les étudiants !
+            </h1>
+            <p class="text-lg md:text-xl leading-relaxed opacity-90">
+              Ici, tu peux découvrir de nouvelles passions et créer tes propres événements pour rassembler la communauté autour de tes centres d'intérêt... tout est possible !
+            </p>
+          </div>
+          
+          <!-- Image des étudiants -->
+          <div class="order-1 lg:order-2">
+            <img 
+              src="/images/students-silhouette.webp" 
+              alt="Étudiants en activité" 
+              class="w-full h-auto rounded-2xl shadow-2xl sepia brightness-110"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Grille des sections principales -->
+    <section class="py-12 px-4">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          
+          <!-- Section Les Activités -->
+          <a href="/activities/" class="group block hover:scale-105 transition-all duration-300">
+            <div class="bg-purple-900/50 rounded-3xl overflow-hidden backdrop-blur-sm shadow-xl border border-purple-500/30 h-full">
+              <!-- Image du bar -->
+              <div class="h-48 md:h-56 overflow-hidden">
+                <img 
+                  src="/images/bar-activities.webp" 
+                  alt="Bar et activités" 
+                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                />
+              </div>
+              
+              <!-- Contenu texte -->
+              <div class="p-6 text-white">
+                <h2 class="text-xl md:text-2xl font-bold mb-3 flex items-center">
+                  <span class="bg-purple-600 rounded-full w-8 h-8 flex items-center justify-center mr-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </span>
+                  Les Activités
+                </h2>
+                <p class="text-base leading-relaxed opacity-90">
+                  Découvrez les activités qui sont disponibles
+                </p>
+              </div>
+            </div>
+          </a>
+
+          <!-- Section La Carte -->
+          <a href="/map" class="group block hover:scale-105 transition-all duration-300">
+            <div class="bg-purple-900/50 rounded-3xl overflow-hidden backdrop-blur-sm shadow-xl border border-purple-500/30 h-full">
+              <!-- Image de la carte -->
+              <div class="h-48 md:h-56 overflow-hidden">
+                <img 
+                  src="/images/map-montbeliard.webp" 
+                  alt="Carte de Montbéliard" 
+                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                />
+              </div>
+              
+              <!-- Contenu texte -->
+              <div class="p-6 text-white">
+                <h2 class="text-xl md:text-2xl font-bold mb-3 flex items-center">
+                  <span class="bg-purple-600 rounded-full w-8 h-8 flex items-center justify-center mr-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                    </svg>
+                  </span>
+                  La Carte
+                </h2>
+                <p class="text-base leading-relaxed opacity-90">
+                  Découvrez la carte des activités autour de chez vous
+                </p>
+              </div>
+            </div>
+          </a>
+
+          <!-- Section Créez -->
+          <a href="/creer" class="group block hover:scale-105 transition-all duration-300 md:col-span-2 lg:col-span-1">
+            <div class="bg-purple-900/50 rounded-3xl overflow-hidden backdrop-blur-sm shadow-xl border border-purple-500/30 h-full">
+              <!-- Image des étudiants -->
+              <div class="h-48 md:h-56 overflow-hidden">
+                <img 
+                  src="/images/students-laptop.webp" 
+                  alt="Étudiants travaillant" 
+                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                />
+              </div>
+              
+              <!-- Contenu texte -->
+              <div class="p-6 text-white">
+                <h2 class="text-xl md:text-2xl font-bold mb-3 flex items-center">
+                  <span class="bg-purple-600 rounded-full w-8 h-8 flex items-center justify-center mr-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                  </span>
+                  Créez
+                </h2>
+                <p class="text-base leading-relaxed opacity-90">
+                  Créez vos propres activités et publiez-les
+                </p>
+              </div>
+            </div>
+          </a>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Section statistiques ou informations supplémentaires -->
+   
+
+  </main>
+
+  <FooterDashboard />
+</Layout>
+
+<script>
+  import PocketBase from 'pocketbase';
+  
+  const pb = new PocketBase('http://127.0.0.1:8090');
+  
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Vérifier l'authentification
+    if (!pb.authStore.isValid) {
+      window.location.href = '/auth/login';
+      return;
+    }
+  });
+</script>
+
+<style>
+  /* Effet sépia pour l'image hero */
+  .sepia {
+    filter: sepia(0.4) brightness(1.1) contrast(1.1);
+  }
+  
+  /* Améliorations pour les cartes */
+  .group:hover .bg-purple-900\/50 {
+    background-color: rgba(147, 51, 234, 0.7);
+  }
+  
+  /* Effet de glow sur les cartes */
+  .group > div {
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(128, 90, 213, 0.2);
+  }
+  
+  .group:hover > div {
+    box-shadow: 0 8px 30px rgba(128, 90, 213, 0.4);
+  }
+  
+  /* Animation fluide pour les images */
+  img {
+    transition: transform 0.3s ease;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .grid.lg\\:grid-cols-2 {
+      text-align: center;
+    }
+  }
+</style>

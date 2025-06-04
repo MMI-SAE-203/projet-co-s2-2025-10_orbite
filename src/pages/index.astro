@@ -1,11 +1,266 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+import HeaderPublic from '../components/HeaderPublic.astro';
+import FooterPublic from '../components/FooterPublic.astro';
 ---
 
-<Layout>
-	<Welcome />
+<Layout title="Orbite - Plateforme étudiante UFC">
+  <HeaderPublic />
+  
+  <!-- Hero Section -->
+  <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <!-- Background image -->
+    <div class="absolute inset-0">
+      <img 
+        src="/images/hero-background.webp" 
+        alt="Étudiants" 
+        class="w-full h-full object-cover"
+      />
+      <!-- Dégradé violet vers noir -->
+      <div class="absolute inset-0 bg-gradient-to-b from-purple-900/80 via-purple-900/90 to-black/95"></div>
+    </div>
+    
+    <div class="relative z-10 max-w-6xl mx-auto px-4 text-center text-white py-20">
+      <!-- Titre principal -->
+      <div class="mb-8 animate-fade-in-up">
+        <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 leading-tight tracking-tight">
+          "Les étudiants au <span class="text-yellow-400">centre</span> de l'événement"
+        </h1>
+      </div>
+      
+      <!-- Sous-titre -->
+      <div class="mb-12 animate-fade-in-up animation-delay-300">
+        <p class="text-lg md:text-xl lg:text-2xl text-gray-200 mb-8 max-w-4xl mx-auto leading-relaxed">
+          Étudiants, vous êtes au centre de l'activité à votre Orbite, une plateforme des événements et un site. 
+          Que tu sois passionné de sport, d'art, de jeux ou de technologie, il y a toujours un événement fait pour toi !
+        </p>
+      </div>
+      
+      <!-- CTA Button -->
+      <div class="mb-16 animate-fade-in-up animation-delay-500">
+        <a href="/auth/register" 
+           class="group bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 px-10 rounded-xl text-lg transition-all duration-300 transform hover:scale-105 inline-flex items-center gap-2">
+          S'inscrire gratuitement
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </a>
+      </div>
+      
+      <!-- Scroll indicator -->
+      
+    </div>
+  </section>
+
+  <!-- Section Orbite -->
+  <section class="bg-gradient-to-b from-black to-purple-900 py-24 text-white">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="text-left max-w-4xl mx-auto">
+        <div class="flex items-center mb-8">
+          <div class="h-1 w-12 bg-yellow-400 mr-4"></div>
+          <h2 class="text-3xl md:text-5xl lg:text-6xl font-bold">Orbite</h2>
+        </div>
+        
+        <p class="text-gray-200 text-lg md:text-xl mb-8 leading-relaxed">
+          Orbite, c'est bien plus qu'une simple application : c'est le compagnon idéal pour votre planification de vie 
+          étudiante ! Grâce à ses fonctionnalités intuitives, trouvez des activités qui te passionnent, rencontre d'autres 
+          étudiants et crée tes propres événements en quelques clics.
+        </p>
+        
+        <p class="text-2xl md:text-3xl font-medium text-yellow-400 mb-12 italic">
+          "Orbite : La classe étudiante en ligne !"
+        </p>
+        
+        <div class="flex items-center mb-8">
+          <div class="h-1 w-12 bg-yellow-400 mr-4"></div>
+          <h3 class="text-2xl md:text-3xl lg:text-4xl font-bold">Fonctionnalités d'Orbite</h3>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Fonctionnalités Section -->
+  <section class="bg-gradient-to-b from-purple-900 to-black text-white py-20">
+    <div class="max-w-6xl mx-auto px-4">
+      
+      <!-- Feature 1: Trouver des activités -->
+      <div class="grid lg:grid-cols-2 gap-16 items-center mb-32">
+        <div>
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-400 text-black mb-6 shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <h3 class="text-2xl md:text-3xl lg:text-4xl font-bold mb-6">Trouver des activités</h3>
+          <p class="text-gray-200 mb-6 leading-relaxed text-lg">
+            Découvre une multitude d'activités organisées par d'autres étudiants ! Que tu sois passionné de sport, d'art, de jeux ou de 
+            technologie, il y a toujours un événement fait pour toi. À la Bougotte ou Chamars, les possibilités sont infinies pour découvrir 
+            de nouvelles passions et rencontrer des personnes qui partagent tes centres d'intérêt.
+          </p>
+          <p class="text-yellow-400 font-semibold mb-8 text-lg">
+            Participe à des activités uniques et rencontre d'autres étudiants
+          </p>
+          <a href="/auth/register" 
+             class="group bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-3 px-8 rounded-lg transition-all duration-300 transform hover:scale-105 inline-flex items-center gap-2">
+            S'inscrire et découvrir
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </a>
+        </div>
+        <div class="flex justify-center">
+          <div class="relative">
+            <img 
+              src="/images/mobile-events-mockup.webp" 
+              alt="Interface mobile des événements" 
+              class="w-80 h-auto rounded-2xl shadow-xl"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature 2: Explorer la carte -->
+      <div class="grid lg:grid-cols-2 gap-16 items-center mb-32">
+        <div class="order-2 lg:order-1 flex justify-center">
+          <div class="relative">
+            <img 
+              src="/images/mobile-map-mockup.webp" 
+              alt="Carte interactive des activités" 
+              class="w-80 h-auto rounded-2xl shadow-xl"
+            />
+          </div>
+        </div>
+        <div class="order-1 lg:order-2">
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-400 text-black mb-6 shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+            </svg>
+          </div>
+          <h3 class="text-2xl md:text-3xl lg:text-4xl font-bold mb-6">Explorer les activités grâce à la carte</h3>
+          <p class="text-gray-200 mb-6 leading-relaxed text-lg">
+            Utilise notre carte interactive pour découvrir les activités près de chez toi ! Filtre par catégories, localisation et date pour 
+            trouver l'événement parfait. Plus besoin de chercher longtemps, tout est à portée de clic. Que ce soit à Besançon, Montbéliard ou 
+            ailleurs dans la région, trouve l'événement parfait facilement.
+          </p>
+          <p class="text-yellow-400 font-semibold mb-8 text-lg">
+            Explore les événements autour de toi grâce à notre carte interactive.
+          </p>
+          <a href="/auth/register" 
+             class="group bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-3 px-8 rounded-lg transition-all duration-300 transform hover:scale-105 inline-flex items-center gap-2">
+            S'inscrire et découvrir
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Feature 3: Créer des activités -->
+      <div class="grid lg:grid-cols-2 gap-16 items-center">
+        <div>
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-400 text-black mb-6 shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+          </div>
+          <h3 class="text-2xl md:text-3xl lg:text-4xl font-bold mb-6">Créer tes propres activités</h3>
+          <p class="text-gray-200 mb-6 leading-relaxed text-lg">
+            Envie d'organiser quelque chose ? Crée ton propre événement ! Invite tes amis, fixe une date et un lieu, et regarde ton groupe grandir. 
+            Organise des sorties, des études de groupe ou des fêtes. Avec Orbite, deviens un organisateur et rassemble la communauté autour de tes passions.
+          </p>
+          <p class="text-yellow-400 font-semibold mb-8 text-lg">
+            Crée tes propres activités et rassemble la communauté.
+          </p>
+          <a href="/auth/register" 
+             class="group bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-3 px-8 rounded-lg transition-all duration-300 transform hover:scale-105 inline-flex items-center gap-2">
+            S'inscrire et découvrir
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </a>
+        </div>
+        <div class="flex justify-center">
+          <div class="relative">
+            <img 
+              src="/images/mobile-form-mockup.webp" 
+              alt="Formulaire de création d'activité" 
+              class="w-80 h-auto rounded-2xl shadow-xl"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- CTA final -->
+    <div class="mt-32 text-center">
+      <div class="max-w-4xl mx-auto px-4">
+        <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">Prêt à rejoindre la communauté Orbite ?</h2>
+        <p class="text-xl md:text-2xl text-gray-300 mb-10 max-w-2xl mx-auto">
+          Inscris-toi dès maintenant et commence à explorer les événements ou à créer les tiens !
+        </p>
+        <a href="/auth/register" 
+           class="group bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 px-10 rounded-xl text-lg transition-all duration-300 transform hover:scale-105 inline-flex items-center gap-2">
+          S'inscrire gratuitement
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <FooterPublic />
 </Layout>
+
+<style>
+  /* Animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .animate-fade-in-up {
+    animation: fadeInUp 1s ease-out forwards;
+    opacity: 0;
+  }
+  
+  .animation-delay-300 {
+    animation-delay: 0.3s;
+  }
+  
+  .animation-delay-500 {
+    animation-delay: 0.5s;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .feature-card {
+      text-align: center;
+    }
+    
+    .feature-card .inline-flex {
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    /* Taille uniforme des mockups sur mobile */
+    img[src*="mobile-"] {
+      width: 280px !important;
+      max-width: 280px !important;
+    }
+  }
+  
+  @media (min-width: 769px) {
+    /* Taille uniforme des mockups sur desktop */
+    img[src*="mobile-"] {
+      width: 320px !important;
+      max-width: 320px !important;
+    }
+  }
+</style>

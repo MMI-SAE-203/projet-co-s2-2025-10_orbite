@@ -1,0 +1,121 @@
+---
+import Layout from '../layouts/Layout.astro';
+import HeaderDashboard from '../components/HeaderDashboard.astro';
+import FooterDashboard from '../components/FooterDashboard.astro';
+---
+
+<Layout title="Nous aider - Orbite">
+  <HeaderDashboard />
+  
+  <main class="min-h-screen bg-gradient-to-b from-purple-950 via-purple-900 to-black pt-20">
+    
+    <!-- Hero Section -->
+    <section class="py-16 px-4">
+      <div class="max-w-4xl mx-auto text-center">
+        <h1 class="text-4xl md:text-5xl font-bold text-white mb-6">
+          Nous aider
+        </h1>
+        <p class="text-xl text-purple-200 mb-8 leading-relaxed">
+          Avec votre soutien, nous pourrons améliorer la plateforme, proposer plus d'événements et créer une communauté plus dynamique. Chaque contribution, petite ou grande, nous aide à aller plus loin.
+        </p>
+        
+        <!-- Image de la plateforme -->
+        <div class="mb-12">
+          <img 
+            src="/images/orbite-platform-mockup.webp" 
+            alt="Aperçu de la plateforme Orbite" 
+            class="w-full max-w-3xl mx-auto rounded-2xl shadow-2xl"
+          />
+        </div>
+        
+        <p class="text-lg text-gray-200 mb-8">
+          Orbite est une plateforme conçue par et pour les étudiants pour faciliter l'organisation et la participation à des événements sur les campus.
+        </p>
+      </div>
+    </section>
+
+    <!-- Pourquoi cette collecte ? -->
+    <section class="py-12 px-4">
+      <div class="max-w-4xl mx-auto">
+        <div class="bg-purple-800/30 rounded-2xl p-8 backdrop-blur-sm border border-purple-700/50 mb-8">
+          <h2 class="text-3xl font-bold text-white mb-6">Pourquoi cette collecte ?</h2>
+          <p class="text-gray-200 leading-relaxed text-lg">
+            Aujourd'hui, organiser un événement étudiant repose souvent sur les réseaux sociaux et le bouche à oreille, ce qui peut limiter la visibilité et l'engagement. Avec Orbite, nous voulons créer un espace unique où chaque étudiant pourra découvrir, créer et promouvoir des événements facilement.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- À quoi servira le financement -->
+    <section class="py-12 px-4">
+      <div class="max-w-4xl mx-auto">
+        <div class="bg-purple-800/30 rounded-2xl p-8 backdrop-blur-sm border border-purple-700/50 mb-8">
+          <h2 class="text-3xl font-bold text-white mb-6">À quoi servira le financement</h2>
+          <p class="text-gray-200 leading-relaxed mb-6">
+            Grâce à ce financement, nous allons pouvoir développer la plateforme, assurer son hébergement et mettre en place une campagne de lancement. Nous souhaitons toucher un maximum d'étudiants et permettre la création de plus de 500 événements étudiants dès la première année de lancement. Cela nous permettra de dynamiser autour de la vie étudiante.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Qui porte la collecte ? -->
+    <section class="py-12 px-4">
+      <div class="max-w-4xl mx-auto">
+        <div class="bg-purple-800/30 rounded-2xl p-8 backdrop-blur-sm border border-purple-700/50 mb-8">
+          <h2 class="text-3xl font-bold text-white mb-6">Qui porte la collecte ?</h2>
+          <p class="text-gray-200 leading-relaxed mb-6">
+            Nous sommes trois étudiants en BUT Métiers du Multimédia et de l'Internet (MMI) à Montbéliard, passionnés par le numérique et l'innovation. Ce projet est né au cadre de notre première année d'étude, avec une volonté commune : faciliter l'intégration des étudiants grâce à une plateforme interactive et engageante.
+          </p>
+          <p class="text-gray-200 leading-relaxed">
+            Ayant nous-mêmes vécu la difficulté de se faire de nouveaux amis en arrivant dans une nouvelle ville, nous avons imaginé Orbite, un site qui permet aux étudiants de se rejoindre facilement lors des sorties, le tout dans une dynamique gamifiée. Nous souhaitons à travers cette campagne, nous souhaitons concrétiser notre projet en développant une plateforme fonctionnelle et accessible à tous les étudiants. Votre soutien nous aidera à faire d'Orbite une réalité et à améliorer la vie étudiante grâce aux rencontres et aux expériences partagées !
+          </p>
+        </div>
+      </div>
+    </section>
+
+    
+
+    <!-- Call to Action -->
+    <section class="py-16 px-4">
+      <div class="max-w-2xl mx-auto text-center">
+        <div class="bg-gradient-to-r from-purple-600 to-purple-800 rounded-2xl p-8 border border-purple-500/50">
+          <h3 class="text-2xl font-bold text-white mb-4">
+            Participez à la collecte
+          </h3>
+          <p class="text-purple-200 mb-6 leading-relaxed">
+            Votre contribution nous aidera à créer une plateforme qui transformera la vie étudiante. Ensemble, construisons l'avenir des événements étudiants !
+          </p>
+          <div class="space-y-4">
+            <a href="https://fr.ulule.com/orbite-plateforme/" 
+               target="_blank"
+               rel="noopener noreferrer"
+               class="block bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-4 px-8 rounded-lg text-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+              🚀 Contribuer sur Ulule
+            </a>
+            <p class="text-purple-300 text-sm">
+              Paiement sécurisé et sans engagement
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+  </main>
+
+  <FooterDashboard />
+</Layout>
+
+<script>
+  import PocketBase from 'pocketbase';
+  
+  const pb = new PocketBase('http://127.0.0.1:8090');
+  
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Vérifier l'authentification
+    if (!pb.authStore.isValid) {
+      window.location.href = '/auth/login';
+      return;
+    }
+  });
+</script>

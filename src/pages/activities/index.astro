@@ -1,0 +1,658 @@
+---
+import { getAllEvents, getCategories, getImageUrl, formatDate } from '../../lib/pocketbase';
+import HeaderDashboard from '../../components/HeaderDashboard.astro';
+import FooterDashboard from '../../components/FooterDashboard.astro';
+
+// Récupération des données côté serveur
+const events = await getAllEvents();
+
+// Toutes les catégories disponibles dans PocketBase
+const allCategories = [
+  'Sport',
+  'Soirée', 
+  'Cinéma',
+  'Jeux',
+  'Musique',
+  'Chill',
+  'Voyages',
+  'Études',
+  'Resto',
+  'Rencontres',
+  'Cuisine',
+  'Shopping',
+  'Culture',
+  'Bien-être',
+  'Bénévolat'
+];
+
+// Fonction pour obtenir l'icône de catégorie
+function getCategoryIcon(category) {
+  const icons = {
+    'sport': '⚽',
+    'soirée': '🎉',
+    'cinéma': '🎬',
+    'jeux': '🎮',
+    'musique': '🎵',
+    'chill': '😌',
+    'voyages': '✈️',
+    'études': '📚',
+    'resto': '🍽️',
+    'rencontres': '👥',
+    'cuisine': '👨‍🍳',
+    'shopping': '🛍️',
+    'culture': '🎭',
+    'bien-être': '🧘',
+    'bénévolat': '🤝'
+  };
+  return icons[category.toLowerCase()] || '🌟';
+}
+
+// Fonction pour nettoyer le texte HTML
+function cleanHtmlText(text) {
+  if (!text) return '';
+  
+  // Si c'est une chaîne, nettoyer le HTML
+  if (typeof text === 'string') {
+    return text.replace(/<[^>]*>/g, '').trim();
+  }
+  
+  // Pour tout autre type, convertir en chaîne
+  return String(text);
+}
+
+// ✅ Fonction pour déterminer le statut de l'événement
+function getEventStatus(dateString) {
+  const eventDate = new Date(dateString);
+  const now = new Date();
+  
+  if (eventDate > now) {
+    return { status: 'upcoming', label: 'À venir', class: 'bg-green-600' };
+  } else {
+    return { status: 'passed', label: 'Passé', class: 'bg-red-600' };
+  }
+}
+---
+
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width" />
+  <title>Activités - Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-b from-purple-950 via-purple-900 to-black">
+  <HeaderDashboard />
+  
+  
+  <main class="min-h-screen bg-gradient-to-b from-purple-950 via-purple-900 to-black pt-20">
+    
+    <!-- Hero Section -->
+    <section class="py-16 px-4">
+      <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-12">
+          <div class="flex items-center justify-center mb-6">
+            <h1 class="text-4xl md:text-5xl font-bold text-white">Découvrez les activités</h1>
+          </div>
+          <p class="text-xl text-purple-200 max-w-4xl mx-auto leading-relaxed mb-8">
+            Trouvez l'activité parfaite pour vous ! Sport, culture, musique, cinéma... il y en a pour tous les goûts dans la communauté étudiante!
+          </p>
+          
+        </div>
+
+        <!-- Filtres avec scroll horizontal -->
+        <div class="mb-8">
+          <div class="bg-purple-800/30 rounded-2xl p-6 backdrop-blur-sm border border-purple-700/50">
+            <div class="flex items-center gap-4">
+              <!-- Filtres par catégorie avec scroll horizontal -->
+              <div class="flex-1 min-w-0">
+                <div 
+                  class="flex gap-3 pb-2 scroll-container"
+                  style="overflow-x: auto; overflow-y: hidden; white-space: nowrap; scrollbar-width: none; -ms-overflow-style: none;"
+                >
+                  <button 
+                    class="filter-btn active inline-flex items-center px-6 py-3 rounded-full bg-white/20 backdrop-blur-sm text-white font-medium transition-all duration-300 hover:bg-white/30 border border-white/30 whitespace-nowrap"
+                    data-category="all"
+                    style="flex-shrink: 0;"
+                  >
+                    ☀️ Toutes
+                  </button>
+                  {allCategories.map(category => (
+                    <button 
+                      class="filter-btn inline-flex items-center px-6 py-3 rounded-full bg-white/10 backdrop-blur-sm text-white font-medium transition-all duration-300 hover:bg-white/20 border border-white/20 whitespace-nowrap"
+                      data-category={category.toLowerCase()}
+                      style="flex-shrink: 0;"
+                    >
+                      {getCategoryIcon(category)} {category}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <!-- Section droite avec bouton créer et filtre date -->
+              <div class="flex flex-col gap-3 flex-shrink-0">
+                  <!-- Bouton Créer une activité - Style jaune avec hover -->
+                  <a 
+                    href="/creer" 
+                    class="inline-flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-2 px-4 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg text-sm whitespace-nowrap border-2 border-yellow-400 hover:border-yellow-500"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Créer une activité
+                  </a>
+                <!-- Filtre par date -->
+                <select 
+                  id="date-filter" 
+                  class="px-4 py-2 rounded-full backdrop-blur-sm text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50 appearance-none cursor-pointer text-sm"
+                  style="background: rgba(255, 255, 255, 0.2); color: white;"
+                >
+                  <option value="all" style="background: #6b46c1; color: white;"> Par date</option>
+                  <option value="today" style="background: #6b46c1; color: white;">Aujourd'hui</option>
+                  <option value="week" style="background: #6b46c1; color: white;">Cette semaine</option>
+                  <option value="month" style="background: #6b46c1; color: white;">Ce mois</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grille des événements -->
+        <div id="events-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {events.map(event => {
+            const imageUrl = event.image_event ? getImageUrl(event, event.image_event) : null;
+            const eventStatus = getEventStatus(event.date_event);
+            return (
+              <a href={`/activities/${event.id}`} class="block hover-card">
+                <div 
+                  class="event-card relative rounded-lg overflow-hidden h-64 group cursor-pointer"
+                  data-category={event.categorie_event.toLowerCase()}
+                  data-date={event.date_event}
+                  data-points={event.nb_points_gagne}
+                  data-spots={event.nb_users_max}
+                  data-status={eventStatus.status}
+                  data-event-id={event.id}
+                  style="position: relative; height: 16rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);"
+                >
+                  {imageUrl ? (
+                    <img 
+                      src={imageUrl || "/placeholder.svg"} 
+                      alt={event.nom_event} 
+                      class="card-image w-full h-full object-cover"
+                      style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);"
+                      onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                    />
+                  ) : null}
+                  
+                  <!-- Fallback background si pas d'image -->
+                  <div 
+                    class={`w-full h-full bg-purple-800 flex items-center justify-center ${imageUrl ? 'hidden' : 'flex'}`}
+                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+                  >
+                    <div class="text-center p-4">
+                      <div class="text-6xl mb-2">{getCategoryIcon(event.categorie_event)}</div>
+                      <p class="text-white text-sm font-medium">{event.nom_event || 'Événement'}</p>
+                    </div>
+                  </div>
+
+                  <!--  Badge de statut (À venir / Passé) avec indicateur de points -->
+                  <div 
+                    class={`absolute top-4 right-4 z-30 px-3 py-1 rounded-full text-white text-xs font-medium ${eventStatus.class} flex items-center gap-1`}
+                    style="box-shadow: 0 2px 8px rgba(0,0,0,0.3);"
+                  >
+                    {eventStatus.label}
+                    {event.points_distributed && eventStatus.status === 'passed' && (
+                      <span class="text-yellow-300"></span>
+                    )}
+                  </div>
+
+                  <!-- Overlay gradient pour la lisibilité -->
+                  <div 
+                    class="card-overlay bg-gradient-to-t from-black via-transparent to-transparent"
+                    style="position: absolute; bottom: 0; left: 0; right: 0; height: 50%; z-index: 10; transition: all 0.3s ease;"
+                  ></div>
+                  
+                  <!-- Contenu de la carte -->
+                  <div 
+                    class="card-content text-white p-4"
+                    style="position: absolute; bottom: 0; left: 0; right: 0; z-index: 20; transition: all 0.3s ease;"
+                  >
+                    <h2 class="card-title text-xl font-bold mb-2 text-white" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.8); transition: all 0.3s ease;">
+                      {event.nom_event}
+                    </h2>
+                    
+                    <div class="card-info space-y-1 mb-3" style="transition: all 0.3s ease;">
+                      <div class="flex items-center text-white text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">{formatDate(event.date_event)}</span>
+                      </div>
+                      
+                      {event.lieu_event && (
+                        <div class="flex items-center text-white text-sm">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          <span style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">{cleanHtmlText(event.lieu_event)}</span>
+                        </div>
+                      )}
+                      
+                      <div class="flex items-center text-white text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        <span style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">{event.nb_users_max} Personnes</span>
+                      </div>
+                    </div>
+                    
+                    <div class="card-badges flex flex-wrap gap-2" style="transition: all 0.3s ease;">
+                      <span class="bg-purple-600 text-white text-xs px-2 py-1 rounded shadow-lg" style="transition: all 0.3s ease;">
+                        {getCategoryIcon(event.categorie_event)} {event.categorie_event || 'Divers'}
+                      </span>
+                      <!-- ✅ Affichage des points automatiques avec statut -->
+                      <span class={`text-xs px-2 py-1 rounded shadow-lg font-medium ${
+                        eventStatus.status === 'passed' 
+                          ? 'bg-green-500 text-white' 
+                          : 'bg-yellow-500 text-black'
+                      }`} style="transition: all 0.3s ease;">
+                        {eventStatus.status === 'passed' ? '✅ Points distribués' : '⭐ 10 pts instantanément'}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <!-- Bouton d'action -->
+                  <div 
+                    class="card-button bg-yellow-400 rounded-full w-10 h-10 flex items-center justify-center shadow-lg"
+                    style="position: absolute; bottom: 16px; right: 16px; z-index: 30; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="transition: all 0.3s ease;">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </div>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+
+       
+        <div id="no-events" class="hidden text-center py-12">
+          <div class="text-6xl mb-4">🔍</div>
+          <h3 class="text-2xl font-bold text-white mb-2">Aucune activité trouvée</h3>
+          <p class="text-purple-200">Essayez de modifier vos filtres pour voir plus d'activités.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <FooterDashboard />
+</body>
+</html>
+
+<script>
+  import PocketBase from 'pocketbase';
+
+  let currentCategory = 'all';
+  let currentDateFilter = 'all';
+  const pb = new PocketBase('http://127.0.0.1:8090');
+
+  document.addEventListener('DOMContentLoaded', () => {
+    setupEventListeners();
+    setupHoverEffects();
+    setupScrollIndicators();
+    
+    // ✅ Système automatique d'attribution des points
+    startAutomaticPointsSystem();
+  });
+
+  // ✅ Système automatique qui vérifie en arrière-plan
+  async function startAutomaticPointsSystem() {
+    console.log(' Démarrage du système automatique d\'attribution des points...');
+    
+  
+    await checkAndAwardPoints();
+    
+   
+    setInterval(async () => {
+      await checkAndAwardPoints();
+    }, 60000); // 1 minute
+    
+   
+    document.addEventListener('visibilitychange', async () => {
+      if (!document.hidden) {
+        console.log(' Page redevenue visible, vérification des points...');
+        await checkAndAwardPoints();
+      }
+    });
+  }
+
+  async function checkAndAwardPoints() {
+    try {
+      console.log(' Vérification automatique des points...');
+      
+      const response = await fetch('/api/award-points', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success && result.participantsRewarded > 0) {
+        console.log(` ${result.participantsRewarded} participants ont reçu ${result.totalPointsAwarded} points !`);
+        
+        
+        showPointsNotification(result);
+        
+        
+        updateEventCards();
+        
+       
+        setTimeout(() => {
+          window.location.reload();
+        }, 3000);
+      } else {
+        console.log('ℹ️ Aucun point à attribuer pour le moment');
+      }
+      
+    } catch (error) {
+      console.warn('⚠️ Erreur lors de la vérification automatique:', error.message);
+      
+    }
+  }
+
+  function showPointsNotification(result) {
+    
+    const notification = document.createElement('div');
+    notification.className = 'fixed bottom-4 right-4 bg-green-600 text-white p-4 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform max-w-sm';
+    
+    notification.innerHTML = `
+      <div class="flex items-start gap-3">
+        <span class="text-2xl"></span>
+        <div>
+          <p class="font-semibold">Points attribués automatiquement !</p>
+          <p class="text-sm mt-1">${result.participantsRewarded} participant${result.participantsRewarded > 1 ? 's' : ''} ont reçu ${result.totalPointsAwarded} points</p>
+          <p class="text-xs mt-1 opacity-90">Pour ${result.eventsProcessed} événement${result.eventsProcessed > 1 ? 's' : ''} passé${result.eventsProcessed > 1 ? 's' : ''}</p>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    
+    setTimeout(() => {
+      notification.classList.remove('translate-x-full');
+    }, 100);
+    
+    
+    setTimeout(() => {
+      notification.classList.add('translate-x-full');
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification);
+        }
+      }, 300);
+    }, 5000);
+  }
+
+  function updateEventCards() {
+    
+    const eventCards = document.querySelectorAll('.event-card');
+    const now = new Date();
+    
+    eventCards.forEach(card => {
+      const eventDate = new Date(card.dataset.date);
+      const statusBadge = card.querySelector('.absolute.top-4.right-4');
+      const pointsBadge = card.querySelector('.card-badges span:last-child');
+      
+      if (eventDate < now) {
+       
+        if (statusBadge) {
+          statusBadge.innerHTML = 'Passé <span class="text-yellow-300">⭐</span>';
+          statusBadge.className = statusBadge.className.replace(/bg-green-600/, 'bg-red-600');
+        }
+        
+        if (pointsBadge) {
+          pointsBadge.textContent = '✅ Points distribués';
+          pointsBadge.className = pointsBadge.className.replace(/bg-yellow-500 text-black/, 'bg-green-500 text-white');
+        }
+        
+        card.dataset.status = 'passed';
+      }
+    });
+  }
+
+  function setupScrollIndicators() {
+    const scrollContainer = document.querySelector('.scroll-container');
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', () => {
+        const scrollLeft = scrollContainer.scrollLeft;
+        const maxScroll = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+        console.log(`Scroll: ${scrollLeft}/${maxScroll}`);
+      });
+    }
+  }
+
+  function setupHoverEffects() {
+    const cards = document.querySelectorAll('.hover-card');
+    
+    cards.forEach(card => {
+      const eventCard = card.querySelector('.event-card');
+      const cardImage = card.querySelector('.card-image');
+      const cardOverlay = card.querySelector('.card-overlay');
+      const cardContent = card.querySelector('.card-content');
+      const cardTitle = card.querySelector('.card-title');
+      const cardInfo = card.querySelector('.card-info');
+      const cardBadges = card.querySelector('.card-badges');
+      const cardButton = card.querySelector('.card-button');
+      
+      card.addEventListener('mouseenter', () => {
+        eventCard.style.transform = 'translateY(-8px) scale(1.02)';
+        eventCard.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)';
+        
+        if (cardImage) {
+          cardImage.style.transform = 'scale(1.1)';
+        }
+        
+        if (cardOverlay) {
+          cardOverlay.style.background = 'linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.3), transparent)';
+          cardOverlay.style.height = '60%';
+        }
+        
+        if (cardContent) {
+          cardContent.style.transform = 'translateY(-4px)';
+        }
+        
+        if (cardTitle) {
+          cardTitle.style.transform = 'scale(1.05)';
+          cardTitle.style.color = '#fbbf24';
+        }
+        
+        if (cardBadges) {
+          const badges = cardBadges.querySelectorAll('span');
+          badges.forEach((badge, index) => {
+            setTimeout(() => {
+              badge.style.transform = 'translateY(-2px) scale(1.05)';
+              badge.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+            }, index * 50);
+          });
+        }
+        
+        if (cardButton) {
+          cardButton.style.transform = 'scale(1.2) rotate(90deg)';
+          cardButton.style.backgroundColor = '#f59e0b';
+          cardButton.style.boxShadow = '0 8px 25px rgba(245, 158, 11, 0.4)';
+        }
+      });
+      
+      card.addEventListener('mouseleave', () => {
+        eventCard.style.transform = 'translateY(0) scale(1)';
+        eventCard.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+        
+        if (cardImage) cardImage.style.transform = 'scale(1)';
+        if (cardOverlay) {
+          cardOverlay.style.background = 'linear-gradient(to top, rgba(0,0,0,1), transparent, transparent)';
+          cardOverlay.style.height = '50%';
+        }
+        if (cardContent) cardContent.style.transform = 'translateY(0)';
+        if (cardTitle) {
+          cardTitle.style.transform = 'scale(1)';
+          cardTitle.style.color = '#ffffff';
+        }
+        if (cardBadges) {
+          const badges = cardBadges.querySelectorAll('span');
+          badges.forEach(badge => {
+            badge.style.transform = 'translateY(0) scale(1)';
+            badge.style.boxShadow = '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)';
+          });
+        }
+        if (cardButton) {
+          cardButton.style.transform = 'scale(1) rotate(0deg)';
+          cardButton.style.backgroundColor = '#fbbf24';
+          cardButton.style.boxShadow = '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)';
+        }
+      });
+    });
+  }
+
+  function setupEventListeners() {
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    filterButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        filterButtons.forEach(btn => {
+          btn.classList.remove('active');
+          btn.style.background = 'rgba(255, 255, 255, 0.1)';
+          btn.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+          btn.style.transform = 'scale(1)';
+        });
+        
+        this.classList.add('active');
+        this.style.background = 'rgba(255, 255, 255, 0.2)';
+        this.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+        this.style.transform = 'scale(1.05)';
+        
+        currentCategory = this.dataset.category;
+        filterEvents();
+      });
+    });
+
+    const dateFilter = document.getElementById('date-filter');
+    dateFilter?.addEventListener('change', function() {
+      currentDateFilter = this.value;
+      filterEvents();
+    });
+  }
+
+  function filterEvents() {
+    const eventCards = document.querySelectorAll('.event-card');
+    const eventsGrid = document.getElementById('events-grid');
+    const noEventsMessage = document.getElementById('no-events');
+    let visibleCount = 0;
+    
+    eventCards.forEach(card => {
+      const cardCategory = card.dataset.category;
+      const cardDate = new Date(card.dataset.date);
+      const now = new Date();
+      
+      const categoryMatch = currentCategory === 'all' || cardCategory === currentCategory;
+      
+      let dateMatch = true;
+      if (currentDateFilter === 'today') {
+        dateMatch = cardDate.toDateString() === now.toDateString();
+      } else if (currentDateFilter === 'week') {
+        const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        dateMatch = cardDate >= now && cardDate <= weekFromNow;
+      } else if (currentDateFilter === 'month') {
+        const monthFromNow = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+        dateMatch = cardDate >= now && cardDate <= monthFromNow;
+      }
+      
+      if (categoryMatch && dateMatch) {
+        card.parentElement.style.display = 'block';
+        visibleCount++;
+      } else {
+        card.parentElement.style.display = 'none';
+      }
+    });
+    
+    if (visibleCount === 0) {
+      eventsGrid.style.display = 'none';
+      noEventsMessage.style.display = 'block';
+    } else {
+      eventsGrid.style.display = 'grid';
+      noEventsMessage.style.display = 'none';
+    }
+
+    setTimeout(() => {
+      setupHoverEffects();
+    }, 100);
+  }
+
+  function updateStatistics() {
+  const totalEvents = userEvents.length;
+  
+  // ✅ Utiliser les points réels de l'utilisateur (création + participation)
+  document.getElementById('stat-events').textContent = totalEvents;
+  document.getElementById('stat-points').textContent = currentUser?.points || 0;
+  document.getElementById('profile-events-count').textContent = `${totalEvents} activité${totalEvents > 1 ? 's' : ''} créée${totalEvents > 1 ? 's' : ''}`;
+}
+</script>
+
+<style>
+  .filter-btn {
+    transition: all 0.3s ease;
+  }
+
+  .event-card {
+    animation: fadeInUp 0.5s ease-out;
+  }
+
+  .hover-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .scroll-container {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    white-space: nowrap !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    scroll-behavior: smooth;
+  }
+
+  .scroll-container::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  #date-filter {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+  }
+
+  #date-filter option {
+    background: #6b46c1 !important;
+    color: white !important;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .event-card img[style*="display: none"] + div {
+    display: flex !important;
+  }
+</style>

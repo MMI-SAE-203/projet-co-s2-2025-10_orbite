@@ -1,0 +1,87 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout title="Vérification des utilisateurs - Admin">
+  <div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4">
+      <div class="bg-white rounded-lg shadow p-6">
+        <h1 class="text-2xl font-bold mb-6">🔧 Vérification manuelle des utilisateurs</h1>
+        
+        <div class="mb-6">
+          <button 
+            id="load-users" 
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+          >
+            Charger les utilisateurs non vérifiés
+          </button>
+        </div>
+        
+        <div id="users-list" class="space-y-4">
+          <!-- Les utilisateurs seront chargés ici -->
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import PocketBase from 'pocketbase';
+  
+  const pb = new PocketBase('http://127.0.0.1:8090');
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    const loadButton = document.getElementById('load-users');
+    const usersList = document.getElementById('users-list');
+    
+    loadButton?.addEventListener('click', loadUnverifiedUsers);
+    
+    async function loadUnverifiedUsers() {
+      try {
+        // Charger les utilisateurs non vérifiés
+        const users = await pb.collection('users').getFullList({
+          filter: 'verified = false',
+          sort: '-created'
+        });
+        
+        if (users.length === 0) {
+          usersList!.innerHTML = '<p class="text-gray-500">Aucun utilisateur non vérifié.</p>';
+          return;
+        }
+        
+        usersList!.innerHTML = users.map(user => `
+          <div class="border border-gray-200 rounded-lg p-4 flex items-center justify-between">
+            <div>
+              <h3 class="font-semibold">${user.name}</h3>
+              <p class="text-gray-600">${user.email}</p>
+              <p class="text-sm text-gray-500">Créé le: ${new Date(user.created).toLocaleDateString('fr-FR')}</p>
+            </div>
+            <button 
+              onclick="verifyUser('${user.id}')" 
+              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
+            >
+              ✅ Vérifier
+            </button>
+          </div>
+        `).join('');
+        
+      } catch (error) {
+        console.error('Erreur:', error);
+        usersList!.innerHTML = '<p class="text-red-500">Erreur lors du chargement des utilisateurs.</p>';
+      }
+    }
+    
+    // Fonction globale pour vérifier un utilisateur
+    (window as any).verifyUser = async function(userId: string) {
+      try {
+        await pb.collection('users').update(userId, { verified: true });
+        alert('Utilisateur vérifié avec succès !');
+        loadUnverifiedUsers(); // Recharger la liste
+      } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors de la vérification');
+      }
+    };
+  });
+</script>
+</Layout>

@@ -3,14 +3,13 @@
 
 Éléménts à renseigner pour la soutenance :
 
-- [ ] Nom du projet :
-- [ ] URL de la landing page :
-- [ ] URL de l'application finale :
-- [ ] URL de connexion au back office :
-- [ ] Identifiant de connexion au backoffice :
-- [ ] Mot de passe de connexion au backoffice :
-- [ ] URL de la maquette FIGMA :
-- [ ] Description du projet :
+- [ ] Nom du projet : Orbite
+- [ ] URL de la landing page : https://orbites2projet.netlify.app/
+- [ ] URL de l'application finale : https://orbites2projet.netlify.app/
+- [ ] URL de connexion au back office : https://pocketbaseprojet.alexandre-demling.fr/_/
+- [ ] Identifiant de connexion au backoffice : alexandredemling@gmail.com
+- [ ] Mot de passe de connexion au backoffice : Platinium.28
+- [ ] Description du projet : Orbite est une application pour étudiants, de gestion et de découverte d’événements, où les utilisateurs peuvent organiser, commenter, participer à des activités et gagner des points pour débloquer des effets personnalisés.
 
 ## 🚀 Équipe
 

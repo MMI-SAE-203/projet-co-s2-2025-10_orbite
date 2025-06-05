@@ -2,17 +2,13 @@
 <svg id="Calque_2" data-name="Calque 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 451.03 257.44">
   <defs>
     <style>
-      .cls-1 {
-        fill: #330058;
-      }
-
       .cls-1, .cls-2 {
-        stroke: #fdfdfd;
+        fill: #fdfdfd;
+        stroke: #330058;
         stroke-miterlimit: 10;
       }
 
       .cls-2 {
-        fill: #0a0a0a;
         stroke-width: 2px;
       }
     </style>

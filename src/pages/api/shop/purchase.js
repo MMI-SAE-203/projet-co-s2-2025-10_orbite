@@ -9,7 +9,7 @@ export async function POST({ request }) {
 
     console.log("🌟 Tentative de déblocage d'orbite:", { orbitType })
 
-    const pb = new PocketBase("http://127.0.0.1:8090")
+    const pb = new PocketBase('https://pocketbaseprojet.alexandre-demling.fr')
 
     // Vérifier l'authentification
     if (!pb.authStore.isValid) {

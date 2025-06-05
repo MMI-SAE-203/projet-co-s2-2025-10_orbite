@@ -24,7 +24,7 @@ export async function POST({ request }) {
       )
     }
 
-    const pb = new PocketBase("http://127.0.0.1:8090")
+    const pb = new PocketBase('https://pocketbaseprojet.alexandre-demling.fr')
 
     // Vérifier que l'événement existe
     try {
@@ -273,7 +273,7 @@ export async function GET({ request, url }) {
       )
     }
 
-    const pb = new PocketBase("http://127.0.0.1:8090")
+    const pb = new PocketBase('https://pocketbaseprojet.alexandre-demling.fr')
 
     // Vérifier que l'événement existe
     try {

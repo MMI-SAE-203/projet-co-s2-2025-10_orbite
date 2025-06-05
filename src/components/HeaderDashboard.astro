@@ -4,7 +4,7 @@
 <header class="absolute top-0 left-0 right-0 z-50 bg-transparent">
     <nav class="max-w-6xl mx-auto px-4 py-6">
       <div class="flex items-center justify-between">
-        
+        <!-- Logo Orbite -->
         <div class="flex items-center">
           <a href="/dashboard" class="flex items-center hover:opacity-80 transition-opacity">
             <img 
@@ -15,7 +15,7 @@
           </a>
         </div>
         
-       
+        <!-- Navigation Desktop -->
         <div class="hidden lg:flex items-center space-x-6">
           <a href="/dashboard" 
              class="nav-link text-white hover:text-yellow-400 transition-all duration-300 font-medium px-4 py-2 rounded-lg relative overflow-hidden group">
@@ -54,7 +54,7 @@
           </a>
         </div>
         
-        
+        <!-- User menu Desktop -->
         <div class="hidden lg:flex items-center space-x-4">
           <span id="user-name" class="text-white font-medium"></span>
           <button 
@@ -65,7 +65,7 @@
           </button>
         </div>
         
-       
+        <!-- Mobile menu button -->
         <button 
           class="lg:hidden text-white p-2 rounded-lg hover:bg-white/10 transition-colors" 
           id="mobile-menu-btn"
@@ -77,11 +77,11 @@
         </button>
       </div>
       
-      
+      <!-- Mobile menu -->
       <div class="lg:hidden hidden" id="mobile-menu">
         <div class="absolute top-full left-0 right-0 bg-purple-950/95 backdrop-blur-sm border-t border-white/10 shadow-xl">
           <div class="px-4 py-6 space-y-4">
-            
+            <!-- Navigation Links -->
             <div class="space-y-3">
               <a href="/dashboard" 
                  class="mobile-nav-link block text-white hover:text-yellow-400 py-3 px-4 rounded-lg hover:bg-white/10 transition-all duration-300 font-medium relative overflow-hidden group">
@@ -120,7 +120,7 @@
               </a>
             </div>
             
-           
+            <!-- User info Mobile -->
             <div class="pt-4 border-t border-white/20 space-y-3">
               <div class="text-white font-medium" id="user-name-mobile"></div>
               <button 
@@ -139,10 +139,10 @@
   <script>
     import PocketBase from 'pocketbase';
     
-    const pb = new PocketBase('http://127.0.0.1:8090');
+    const pb = new PocketBase('https://pocketbaseprojet.alexandre-demling.fr');
     
     document.addEventListener('DOMContentLoaded', () => {
-      
+      // Afficher le nom de l'utilisateur
       const userNameSpan = document.getElementById('user-name');
       const userNameMobile = document.getElementById('user-name-mobile');
       if (pb.authStore.model) {
@@ -151,7 +151,7 @@
         if (userNameMobile) userNameMobile.textContent = userName;
       }
       
-     
+      // Gérer la déconnexion (desktop et mobile)
       const logoutBtn = document.getElementById('logout-btn');
       const logoutBtnMobile = document.getElementById('logout-btn-mobile');
       
@@ -163,7 +163,7 @@
       logoutBtn?.addEventListener('click', handleLogout);
       logoutBtnMobile?.addEventListener('click', handleLogout);
       
-      
+      // Mobile menu
       const mobileMenuBtn = document.getElementById('mobile-menu-btn');
       const mobileMenu = document.getElementById('mobile-menu');
       
@@ -172,7 +172,7 @@
           e.stopPropagation();
           mobileMenu.classList.toggle('hidden');
           
-         
+          // Changer l'icône du burger
           const svg = mobileMenuBtn.querySelector('svg');
           const isOpen = !mobileMenu.classList.contains('hidden');
           
@@ -183,7 +183,7 @@
           }
         });
         
-        
+        // Fermer le menu si on clique ailleurs
         document.addEventListener('click', (e) => {
           if (!mobileMenuBtn.contains(e.target) && !mobileMenu.contains(e.target)) {
             mobileMenu.classList.add('hidden');
@@ -192,7 +192,7 @@
           }
         });
         
-       
+        // Fermer le menu sur les liens de navigation mobile
         const mobileLinks = mobileMenu.querySelectorAll('a');
         mobileLinks.forEach(link => {
           link.addEventListener('click', () => {
@@ -203,14 +203,14 @@
         });
       }
       
-      
+      // Gestion des états actifs pour les liens de navigation
       const currentPath = window.location.pathname;
       const navLinks = document.querySelectorAll('.nav-link, .mobile-nav-link');
       
       navLinks.forEach(link => {
         const href = link.getAttribute('href');
         if (href === currentPath || (href === '/dashboard' && currentPath === '/dashboard')) {
-          
+          // Ajouter l'état actif
           link.classList.add('active');
           link.style.backgroundColor = 'rgba(250, 204, 21, 0.2)';
           link.style.color = '#fbbf24';
@@ -247,7 +247,7 @@
   </script>
   
   <style>
-  
+    /* Animation pour le menu mobile */
     #mobile-menu {
       transition: all 0.3s ease-in-out;
     }
@@ -262,7 +262,7 @@
       transform: translateY(0);
     }
     
-  
+    /* Animation de pulsation pour les clics */
     @keyframes pulse {
       0% {
         transform: scale(1.05);
@@ -275,13 +275,13 @@
       }
     }
     
-    
+    /* Effet de brillance au survol */
     .nav-link:hover,
     .mobile-nav-link:hover {
       text-shadow: 0 0 10px rgba(250, 204, 21, 0.5);
     }
     
-    
+    /* État actif persistant */
     .nav-link.active,
     .mobile-nav-link.active {
       background: rgba(250, 204, 21, 0.2) !important;
@@ -291,7 +291,7 @@
       border: 1px solid rgba(250, 204, 21, 0.3);
     }
     
-   
+    /* Transition fluide pour tous les états */
     .nav-link,
     .mobile-nav-link {
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

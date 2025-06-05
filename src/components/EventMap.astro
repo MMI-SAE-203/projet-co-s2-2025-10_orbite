@@ -23,14 +23,14 @@ const mapId = `map-${Math.random().toString(36).substr(2, 9)}`;
 
 <script define:vars={{ mapId, initialLat, initialLng, zoom, interactive, showLocationPicker }}>
   document.addEventListener('DOMContentLoaded', () => {
-    
+    // Vérifier si Leaflet est disponible
     if (typeof L === 'undefined') {
       console.error('Leaflet n\'est pas chargé');
       return;
     }
 
     try {
-    
+      // Initialiser la carte
       const map = L.map(mapId, {
         center: [initialLat, initialLng],
         zoom: zoom,
@@ -43,13 +43,13 @@ const mapId = `map-${Math.random().toString(36).substr(2, 9)}`;
         keyboard: interactive
       });
 
-   
+      // Ajouter les tuiles
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19
       }).addTo(map);
 
-      
+      // Créer l'icône personnalisée avec le logo Orbite
       const orbiteIcon = L.divIcon({
         className: 'custom-orbite-marker',
         html: `
@@ -63,29 +63,29 @@ const mapId = `map-${Math.random().toString(36).substr(2, 9)}`;
         popupAnchor: [0, -40]
       });
 
-      
+      // Variable pour stocker le marqueur
       let marker = L.marker([initialLat, initialLng], { 
         icon: orbiteIcon, 
         draggable: showLocationPicker 
       }).addTo(map);
 
       if (showLocationPicker) {
-       
+        // Fonction pour mettre à jour les coordonnées
         function updateCoordinates(lat, lng) {
-         
+          // Dispatch un événement personnalisé avec les nouvelles coordonnées
           const event = new CustomEvent('locationSelected', {
             detail: { lat, lng }
           });
           document.dispatchEvent(event);
         }
 
-       
+        // Mettre à jour les coordonnées lorsque le marqueur est déplacé
         marker.on('dragend', function(e) {
           const position = marker.getLatLng();
           updateCoordinates(position.lat, position.lng);
         });
 
-       
+        // Ajouter un marqueur lorsqu'on clique sur la carte
         map.on('click', function(e) {
           map.removeLayer(marker);
           marker = L.marker(e.latlng, { icon: orbiteIcon, draggable: true }).addTo(map);
@@ -97,11 +97,11 @@ const mapId = `map-${Math.random().toString(36).substr(2, 9)}`;
           });
         });
 
-        
+        // Initialiser avec les coordonnées par défaut
         updateCoordinates(initialLat, initialLng);
       }
 
-      
+      // Exposer la carte globalement pour pouvoir l'utiliser depuis l'extérieur
       window[`map_${mapId}`] = map;
       window[`marker_${mapId}`] = marker;
 
@@ -116,7 +116,7 @@ const mapId = `map-${Math.random().toString(36).substr(2, 9)}`;
 </script>
 
 <style>
- 
+  /* Styles pour le marqueur personnalisé */
   .orbite-marker-container {
     position: relative;
     width: 40px;

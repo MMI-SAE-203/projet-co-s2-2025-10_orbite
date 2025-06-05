@@ -276,7 +276,7 @@ function getEventStatus(dateString) {
           })}
         </div>
 
-       
+        <!-- Message si aucun événement -->
         <div id="no-events" class="hidden text-center py-12">
           <div class="text-6xl mb-4">🔍</div>
           <h3 class="text-2xl font-bold text-white mb-2">Aucune activité trouvée</h3>
@@ -296,7 +296,7 @@ function getEventStatus(dateString) {
 
   let currentCategory = 'all';
   let currentDateFilter = 'all';
-  const pb = new PocketBase('http://127.0.0.1:8090');
+  const pb = new PocketBase('https://pocketbaseprojet.alexandre-demling.fr');
 
   document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
@@ -311,15 +311,15 @@ function getEventStatus(dateString) {
   async function startAutomaticPointsSystem() {
     console.log(' Démarrage du système automatique d\'attribution des points...');
     
-  
+    // Vérification immédiate au chargement
     await checkAndAwardPoints();
     
-   
+    // Vérification toutes les 60 secondes
     setInterval(async () => {
       await checkAndAwardPoints();
     }, 60000); // 1 minute
     
-   
+    // Vérification quand l'utilisateur revient sur la page
     document.addEventListener('visibilitychange', async () => {
       if (!document.hidden) {
         console.log(' Page redevenue visible, vérification des points...');
@@ -348,13 +348,13 @@ function getEventStatus(dateString) {
       if (result.success && result.participantsRewarded > 0) {
         console.log(` ${result.participantsRewarded} participants ont reçu ${result.totalPointsAwarded} points !`);
         
-        
+        // Afficher une notification discrète
         showPointsNotification(result);
         
-        
+        // Mettre à jour l'affichage des cartes
         updateEventCards();
         
-       
+        // Recharger la page après 3 secondes pour voir les changements
         setTimeout(() => {
           window.location.reload();
         }, 3000);
@@ -364,12 +364,12 @@ function getEventStatus(dateString) {
       
     } catch (error) {
       console.warn('⚠️ Erreur lors de la vérification automatique:', error.message);
-      
+      // Ne pas afficher d'erreur à l'utilisateur pour les vérifications automatiques
     }
   }
 
   function showPointsNotification(result) {
-    
+    // Créer une notification discrète en bas à droite
     const notification = document.createElement('div');
     notification.className = 'fixed bottom-4 right-4 bg-green-600 text-white p-4 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform max-w-sm';
     
@@ -386,12 +386,12 @@ function getEventStatus(dateString) {
     
     document.body.appendChild(notification);
     
-    
+    // Animer l'apparition
     setTimeout(() => {
       notification.classList.remove('translate-x-full');
     }, 100);
     
-    
+    // Masquer après 5 secondes
     setTimeout(() => {
       notification.classList.add('translate-x-full');
       setTimeout(() => {
@@ -403,7 +403,7 @@ function getEventStatus(dateString) {
   }
 
   function updateEventCards() {
-    
+    // Mettre à jour les badges de statut des événements
     const eventCards = document.querySelectorAll('.event-card');
     const now = new Date();
     
@@ -413,7 +413,7 @@ function getEventStatus(dateString) {
       const pointsBadge = card.querySelector('.card-badges span:last-child');
       
       if (eventDate < now) {
-       
+        // Événement passé
         if (statusBadge) {
           statusBadge.innerHTML = 'Passé <span class="text-yellow-300">⭐</span>';
           statusBadge.className = statusBadge.className.replace(/bg-green-600/, 'bg-red-600');

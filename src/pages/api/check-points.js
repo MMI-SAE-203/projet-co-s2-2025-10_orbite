@@ -6,7 +6,7 @@ export async function POST({ request }) {
   try {
     console.log("🔍 Vérification des points de participation...")
 
-    const pb = new PocketBase("http://127.0.0.1:8090")
+    const pb = new PocketBase('https://pocketbaseprojet.alexandre-demling.fr')
     const now = new Date()
 
     // Récupérer tous les événements passés qui n'ont pas encore distribué les points

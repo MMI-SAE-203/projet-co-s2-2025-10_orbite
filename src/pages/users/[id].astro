@@ -2,6 +2,7 @@
 import HeaderDashboard from '../../components/HeaderDashboard.astro';
 import FooterDashboard from '../../components/FooterDashboard.astro';
 
+
 export const prerender = false;
 
 const { id } = Astro.params;
@@ -9,7 +10,7 @@ const { id } = Astro.params;
 // Importer PocketBase côté serveur
 import PocketBase from "pocketbase";
 
-const pb = new PocketBase("http://127.0.0.1:8090");
+const pb = new PocketBase('https://pocketbaseprojet.alexandre-demling.fr');
 
 let user = null;
 let error = null;
@@ -278,7 +279,7 @@ function getAvatarUrl(user) {
     if (!userData) return;
     
     try {
-      pb = new PocketBase('http://127.0.0.1:8090');
+      pb = new PocketBase('https://pocketbaseprojet.alexandre-demling.fr');
       await loadUserStats();
       await loadUserOrbit();
     } catch (error) {

@@ -4,10 +4,7 @@ export const prerender = false
 import PocketBase from "pocketbase"
 
 // Initialiser PocketBase
-const pb = new PocketBase("http://127.0.0.1:8090")
-
-// Stockage temporaire en mémoire pour les commentaires
-const tempComments = new Map()
+const pb = new PocketBase("https://pocketbaseprojet.alexandre-demling.fr")
 
 export async function GET({ url }) {
   const eventId = url.searchParams.get("eventId")
@@ -83,26 +80,12 @@ export async function GET({ url }) {
 
       console.log("✅ Commentaires PocketBase enrichis:", existingComments.length)
     } catch (pbError) {
-      console.warn("⚠️ Erreur PocketBase, utilisation du stockage temporaire:", pbError)
+      console.error("⚠️ Erreur PocketBase lors de la récupération des commentaires:", pbError)
     }
 
-    // Récupérer les commentaires temporaires pour cet événement
-    const tempEventComments = tempComments.get(eventId) || []
-    console.log("📋 Commentaires temporaires:", tempEventComments.length)
+    console.log("✅ Total commentaires retournés:", existingComments.length)
 
-    // Combiner les deux sources de commentaires
-    const allComments = [...existingComments, ...tempEventComments]
-
-    // Trier par date (plus récents en premier)
-    allComments.sort((a, b) => {
-      const dateA = new Date(a.created || a.date)
-      const dateB = new Date(b.created || b.date)
-      return dateB - dateA
-    })
-
-    console.log("✅ Total commentaires retournés:", allComments.length)
-
-    return new Response(JSON.stringify(allComments), {
+    return new Response(JSON.stringify(existingComments), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
@@ -147,99 +130,94 @@ export async function POST({ request }) {
       })
     }
 
-    // Essayer d'abord de sauvegarder dans PocketBase
-    let savedToPocketBase = false
-    let newComment = null
-
-    if (userToken) {
-      try {
-        console.log("🔐 Tentative d'authentification avec PocketBase...")
-        pb.authStore.save(userToken, null)
-        await pb.collection("users").authRefresh()
-
-        console.log("✅ Authentification réussie, sauvegarde dans PocketBase...")
-        console.log("👤 Utilisateur authentifié:", pb.authStore.model)
-
-        const commentData = {
-          event: eventId,
-          users: pb.authStore.model.id,
-          content: comment.trim(),
-        }
-
-        // ✅ Créer le commentaire d'abord
-        const createdComment = await pb.collection("comments").create(commentData)
-
-        // ✅ Puis récupérer manuellement les données utilisateur
-        const user = await pb.collection("users").getOne(pb.authStore.model.id)
-
-        // ✅ Construire le commentaire complet avec les données utilisateur
-        newComment = {
-          ...createdComment,
-          expand: {
-            users: user,
-          },
-        }
-
-        savedToPocketBase = true
-        console.log("✅ Commentaire sauvegardé dans PocketBase:", newComment.id)
-        console.log("📋 Données utilisateur récupérées:", {
-          id: user.id,
-          name: user.name,
-          username: user.username,
-          email: user.email,
-        })
-      } catch (pbError) {
-        console.warn("⚠️ Erreur PocketBase, utilisation du stockage temporaire:", pbError)
-      }
-    }
-
-    // Si PocketBase a échoué, utiliser le stockage temporaire
-    if (!savedToPocketBase) {
-      console.log("📝 Sauvegarde en stockage temporaire...")
-
-      newComment = {
-        id: `temp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-        event: eventId,
-        content: comment.trim(),
-        created: new Date().toISOString(),
-        expand: {
-          users: {
-            id: "temp_user",
-            name: username,
-            username: username,
-            email: `${username}@temp.com`,
-            avatar: null,
-          },
-        },
-        // Format compatible avec l'affichage
-        users: "temp_user",
-      }
-
-      // Ajouter au stockage temporaire
-      if (!tempComments.has(eventId)) {
-        tempComments.set(eventId, [])
-      }
-
-      tempComments.get(eventId).push(newComment)
-      console.log("✅ Commentaire ajouté au stockage temporaire")
-    }
-
-    console.log(`✅ Commentaire créé sur ${eventId} par ${username}`)
-
-    // Retourner une réponse JSON au lieu d'une redirection
-    return new Response(
-      JSON.stringify({
-        success: true,
-        comment: newComment,
-        message: "Commentaire ajouté avec succès",
-      }),
-      {
-        status: 200,
+    // Vérifier si l'utilisateur est authentifié
+    if (!userToken) {
+      console.error("❌ Token utilisateur manquant")
+      return new Response(JSON.stringify({ error: "User token is required" }), {
+        status: 401,
         headers: {
           "Content-Type": "application/json",
         },
-      },
-    )
+      })
+    }
+
+    try {
+      console.log("🔐 Tentative d'authentification avec PocketBase...")
+      pb.authStore.save(userToken, null)
+
+      // Vérifier si l'authentification a réussi
+      if (!pb.authStore.isValid) {
+        console.error("❌ Token d'authentification invalide")
+        return new Response(JSON.stringify({ error: "Invalid authentication token" }), {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+      }
+
+      await pb.collection("users").authRefresh()
+      console.log("✅ Authentification réussie:", pb.authStore.model)
+
+      // Créer le commentaire
+      const commentData = {
+        event: eventId,
+        users: pb.authStore.model.id,
+        content: comment.trim(),
+      }
+
+      console.log("📝 Données du commentaire à sauvegarder:", commentData)
+
+      const createdComment = await pb.collection("comments").create(commentData)
+      console.log("✅ Commentaire créé avec succès:", createdComment)
+
+      // Récupérer les données utilisateur
+      const user = await pb.collection("users").getOne(pb.authStore.model.id)
+
+      // Construire le commentaire complet avec les données utilisateur
+      const newComment = {
+        ...createdComment,
+        expand: {
+          users: user,
+        },
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          comment: newComment,
+          message: "Commentaire ajouté avec succès",
+        }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      )
+    } catch (pbError) {
+      console.error("❌ Erreur PocketBase détaillée:", {
+        message: pbError.message,
+        status: pbError.status,
+        data: pbError.data,
+      })
+
+      // Vérifier si c'est une erreur de validation
+      if (pbError.status === 400) {
+        return new Response(
+          JSON.stringify({
+            error: "Erreur de validation",
+            details: pbError.data,
+          }),
+          { status: 400, headers: { "Content-Type": "application/json" } },
+        )
+      }
+
+      return new Response(JSON.stringify({ error: pbError.message || "Erreur lors de la création du commentaire" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      })
+    }
   } catch (error) {
     console.error("❌ Erreur lors de la création du commentaire:", error)
 
@@ -270,62 +248,65 @@ export async function DELETE({ url }) {
       })
     }
 
-    // Essayer de supprimer de PocketBase d'abord
-    let deletedFromPocketBase = false
+    if (!userToken) {
+      return new Response(JSON.stringify({ error: "User token is required" }), {
+        status: 401,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+    }
 
-    if (userToken && !commentId.startsWith("temp_")) {
-      try {
-        console.log("🔐 Tentative d'authentification pour suppression...")
-        pb.authStore.save(userToken, null)
-        await pb.collection("users").authRefresh()
+    try {
+      console.log("🔐 Tentative d'authentification pour suppression...")
+      pb.authStore.save(userToken, null)
 
-        // Vérifier que l'utilisateur est l'auteur
-        const comment = await pb.collection("comments").getOne(commentId)
-        if (comment.users === pb.authStore.model.id) {
-          await pb.collection("comments").delete(commentId)
-          deletedFromPocketBase = true
-          console.log("✅ Commentaire supprimé de PocketBase")
-        } else {
-          throw new Error("Vous ne pouvez supprimer que vos propres commentaires")
-        }
-      } catch (pbError) {
-        console.warn("⚠️ Erreur lors de la suppression PocketBase:", pbError)
-        return new Response(JSON.stringify({ error: pbError.message }), {
+      if (!pb.authStore.isValid) {
+        return new Response(JSON.stringify({ error: "Invalid authentication token" }), {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+      }
+
+      await pb.collection("users").authRefresh()
+
+      // Vérifier que l'utilisateur est l'auteur
+      const comment = await pb.collection("comments").getOne(commentId)
+      if (comment.users === pb.authStore.model.id) {
+        await pb.collection("comments").delete(commentId)
+        console.log("✅ Commentaire supprimé de PocketBase")
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: "Commentaire supprimé avec succès",
+          }),
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          },
+        )
+      } else {
+        return new Response(JSON.stringify({ error: "Vous ne pouvez supprimer que vos propres commentaires" }), {
           status: 403,
           headers: {
             "Content-Type": "application/json",
           },
         })
       }
-    }
-
-    // Si c'est un commentaire temporaire ou si PocketBase a échoué
-    if (!deletedFromPocketBase && commentId.startsWith("temp_")) {
-      console.log("🗑️ Suppression du stockage temporaire...")
-
-      // Parcourir tous les événements pour trouver et supprimer le commentaire
-      for (const [eventId, comments] of tempComments.entries()) {
-        const index = comments.findIndex((c) => c.id === commentId)
-        if (index !== -1) {
-          comments.splice(index, 1)
-          console.log("✅ Commentaire temporaire supprimé")
-          break
-        }
-      }
-    }
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Commentaire supprimé avec succès",
-      }),
-      {
-        status: 200,
+    } catch (pbError) {
+      console.warn("⚠️ Erreur lors de la suppression PocketBase:", pbError)
+      return new Response(JSON.stringify({ error: pbError.message }), {
+        status: 403,
         headers: {
           "Content-Type": "application/json",
         },
-      },
-    )
+      })
+    }
   } catch (error) {
     console.error("❌ Erreur lors de la suppression:", error)
 

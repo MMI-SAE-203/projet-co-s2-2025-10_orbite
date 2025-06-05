@@ -11,7 +11,7 @@ export async function POST({ request }) {
     // Initialiser PocketBase avec gestion d'erreur
     let pb
     try {
-      pb = new PocketBase("http://127.0.0.1:8090")
+      pb = new PocketBase('https://pocketbaseprojet.alexandre-demling.fr')
       console.log("✅ PocketBase initialisé")
     } catch (pbError) {
       console.error("❌ Erreur initialisation PocketBase:", pbError)

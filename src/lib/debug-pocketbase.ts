@@ -1,23 +1,23 @@
 import PocketBase from 'pocketbase';
 
-const pb = new PocketBase('http://127.0.0.1:8090');
+const pb = new PocketBase("https://pocketbaseprojet.alexandre-demling.fr:443");
 
-
+// Script de diagnostic pour PocketBase
 export async function diagnosePocketBase() {
   console.log('🔍 === DIAGNOSTIC POCKETBASE ===');
   
   try {
-    
+    // 1. Test de connexion
     console.log('1. Test de connexion...');
     const health = await pb.health.check();
     console.log('✅ PocketBase accessible:', health);
     
-    
+    // 2. Lister toutes les collections
     console.log('2. Collections disponibles...');
     const collections = await pb.collections.getFullList();
     console.log('📚 Collections:', collections.map(c => c.name));
     
-   
+    // 3. Vérifier la collection event
     console.log('3. Structure de la collection event...');
     const eventCollection = collections.find(c => c.name === 'event');
     if (eventCollection) {
@@ -27,21 +27,21 @@ export async function diagnosePocketBase() {
       return;
     }
     
-    
+    // 4. Lister tous les événements
     console.log('4. Tous les événements dans la base...');
     const allEvents = await pb.collection('event').getFullList({
       sort: '-created'
     });
     console.log(`📊 Nombre total d'événements: ${allEvents.length}`);
     
-   
+    // Afficher les 5 derniers événements créés
     const recentEvents = allEvents.slice(0, 5);
     console.log('📋 5 derniers événements:');
     recentEvents.forEach((event, index) => {
       console.log(`${index + 1}. ID: ${event.id} | Nom: ${event.nom_event} | Créé: ${event.created}`);
     });
     
-    
+    // 5. Test de création d'un événement de test
     console.log('5. Test de création d\'un événement...');
     if (pb.authStore.isValid) {
       const testEvent = {
@@ -61,11 +61,11 @@ export async function diagnosePocketBase() {
       const createdEvent = await pb.collection('event').create(testEvent);
       console.log('✅ Événement de test créé:', createdEvent);
       
-     
+      // Vérifier qu'on peut le récupérer immédiatement
       const retrievedEvent = await pb.collection('event').getOne(createdEvent.id);
       console.log('✅ Événement de test récupéré:', retrievedEvent);
       
-      
+      // Supprimer l'événement de test
       await pb.collection('event').delete(createdEvent.id);
       console.log('🗑️ Événement de test supprimé');
     } else {
@@ -79,19 +79,19 @@ export async function diagnosePocketBase() {
   }
 }
 
-
+// Fonction pour vérifier un événement spécifique
 export async function checkSpecificEvent(eventId: string) {
   console.log(`🔍 Vérification de l'événement ${eventId}...`);
   
   try {
-    
+    // Essayer de récupérer l'événement
     const event = await pb.collection('event').getOne(eventId);
     console.log('✅ Événement trouvé:', event);
     return event;
   } catch (error) {
     console.error('❌ Événement non trouvé:', error);
     
-    
+    // Chercher des événements similaires
     console.log('🔍 Recherche d\'événements similaires...');
     const allEvents = await pb.collection('event').getFullList();
     const similarEvents = allEvents.filter(e => 

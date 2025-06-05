@@ -1,5 +1,9 @@
-// @ts-check
 import { defineConfig } from 'astro/config';
+import tailwind from '@astrojs/tailwind';
+import netlify from '@astrojs/netlify'; // ✅ nouvelle syntaxe
 
-// https://astro.build/config
-export default defineConfig({});
+export default defineConfig({
+  output: 'server', // ✅ accepté en Astro 5
+  adapter: netlify(), // ✅ nouvelle version de l’adapter
+  integrations: [tailwind()]
+});

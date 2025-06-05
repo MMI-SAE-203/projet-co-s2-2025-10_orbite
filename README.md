@@ -8,7 +8,7 @@
 - [ ] URL de l'application finale : https://orbites2projet.netlify.app/
 - [ ] URL de connexion au back office : https://pocketbaseprojet.alexandre-demling.fr/_/
 - [ ] Identifiant de connexion au backoffice : alexandredemling@gmail.com
-- [ ] Mot de passe de connexion au backoffice : Platinium.28
+- [ ] Mot de passe de connexion au backoffice : Platinium.233
 - [ ] Description du projet : Orbite est une application pour étudiants, de gestion et de découverte d’événements, où les utilisateurs peuvent organiser, commenter, participer à des activités et gagner des points pour débloquer des effets personnalisés.
 
 ## 🚀 Équipe

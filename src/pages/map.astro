@@ -36,7 +36,7 @@ console.log(`📍 ${eventsWithLocation.length} événements avec localisation tr
     <!-- Carte Leaflet -->
     <div id="map" class="w-full h-screen pt-20"></div>
     
-    <!-- Légende -->
+    
     <div class="absolute bottom-20 left-4 z-[1000] bg-purple-950/90 backdrop-blur-sm rounded-xl p-4 border border-purple-700/50 shadow-xl">
       <h3 class="text-white font-bold text-sm mb-2">💡 Interactions</h3>
       <div class="space-y-1 text-xs text-purple-200">
@@ -124,13 +124,13 @@ console.log(`📍 ${eventsWithLocation.length} événements avec localisation tr
       popupAnchor: [0, -60]
     });
 
-    // Groupe de marqueurs pour gérer les clusters si nécessaire
+    
     const markers = [];
 
-    // Ajouter un marqueur pour chaque événement
+    
     eventsWithLocation.forEach(event => {
       try {
-        // Parser les coordonnées
+       
         const location = typeof event.location === 'string' 
           ? JSON.parse(event.location) 
           : event.location;
@@ -148,13 +148,13 @@ console.log(`📍 ${eventsWithLocation.length} événements avec localisation tr
           return;
         }
 
-        // Créer le marqueur
+       
         const marker = L.marker([lat, lng], { 
           icon: orbiteIcon,
           title: event.nom_event
         }).addTo(map);
 
-        // Créer le contenu du popup
+        
         const popupContent = `
           <div class="orbite-popup-event">
             <div class="flex items-start space-x-3 p-2">

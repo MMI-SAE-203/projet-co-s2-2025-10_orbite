@@ -616,6 +616,7 @@ if (event) {
       }
     }
     
+    // ✅ FIX PRINCIPAL: Correction de la fonction displayParticipants
     function displayParticipants(participants) {
       const container = document.getElementById('participants-avatars');
       if (!container) {
@@ -631,7 +632,11 @@ if (event) {
       
       console.log('🖼️ Affichage des avatars pour', participants.length, 'participants');
       
-      const avatarElements = participants.map((participant, index) => {
+      // ✅ Vider le container d'abord
+      container.innerHTML = '';
+      
+      // ✅ Créer les éléments DOM directement au lieu d'utiliser innerHTML
+      participants.forEach((participant, index) => {
         let avatarUrl = '';
         
         // Construire l'URL de l'avatar si disponible
@@ -649,23 +654,29 @@ if (event) {
         const initials = displayName.substring(0, 2).toUpperCase();
         const fallbackAvatar = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><rect width="40" height="40" fill="%23${Math.floor(Math.random()*16777215).toString(16)}" rx="20"/><text x="20" y="25" text-anchor="middle" fill="white" font-family="Arial" font-size="14" font-weight="bold">${initials}</text></svg>`;
         
-        return `
-      <div class="relative" data-participant-id="${participant.id}">
-        <a href="/users/${participant.id}" class="block">
-          <img 
-            src="${avatarUrl || fallbackAvatar}" 
-            alt="${displayName}" 
-            class="w-10 h-10 rounded-full border-2 border-yellow-400 object-cover hover:scale-110 transition-transform cursor-pointer"
-            title="Voir le profil de ${displayName}"
-          />
-        </a>
-      </div>
-    `;
-      }).join('');
+        // ✅ Créer l'élément DOM directement
+        const participantDiv = document.createElement('div');
+        participantDiv.className = 'relative';
+        participantDiv.setAttribute('data-participant-id', participant.id);
+        
+        const link = document.createElement('a');
+        link.href = `/users/${participant.id}`;
+        link.className = 'block';
+        
+        const img = document.createElement('img');
+        img.src = avatarUrl || fallbackAvatar;
+        img.alt = displayName;
+        img.className = 'w-10 h-10 rounded-full border-2 border-yellow-400 object-cover hover:scale-110 transition-transform cursor-pointer';
+        img.title = `Voir le profil de ${displayName}`;
+        
+        // ✅ Assembler les éléments
+        link.appendChild(img);
+        participantDiv.appendChild(link);
+        container.appendChild(participantDiv);
+      });
       
-      container.innerHTML = avatarElements;
       console.log('✅ Avatars affichés avec succès');
-}
+    }
     
     function showNoParticipants() {
       const noParticipants = document.getElementById('no-participants');
@@ -1048,6 +1059,7 @@ if (event) {
       }
     }
     
+    // ✅ FIX COMMENTAIRES: Amélioration de la fonction displayComments pour mobile
     function displayComments(comments) {
       const container = document.getElementById('comments-list');
       const loading = document.getElementById('comments-loading');
@@ -1063,7 +1075,11 @@ if (event) {
       
       if (noComments) noComments.classList.add('hidden');
       
-      const commentsHtml = comments.map(comment => {
+      // ✅ Vider le container d'abord
+      if (container) container.innerHTML = '';
+      
+      // ✅ Créer les éléments DOM directement pour éviter les problèmes d'échappement
+      comments.forEach(comment => {
         const user = comment.expand?.users;
         const userName = user?.name || user?.username || user?.email || 'Utilisateur';
         
@@ -1086,43 +1102,79 @@ if (event) {
         
         const isOwnComment = currentUser && comment.users === currentUser.id;
         
-        return `
-      <div class="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10" data-comment-id="${comment.id}">
-        <div class="flex gap-3">
-          <div class="flex-shrink-0">
-            <a href="/users/${user?.id || 'unknown'}" class="block">
-              <img 
-                src="${userAvatar}" 
-                alt="${userName}" 
-                class="w-10 h-10 rounded-full border-2 border-white/20 object-cover hover:scale-110 transition-transform cursor-pointer"
-                title="Voir le profil de ${userName}"
-              />
-            </a>
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center justify-between mb-1">
-              <h4 class="font-medium text-white truncate">${userName}</h4>
-              <div class="flex items-center gap-2">
-                <span class="text-xs text-white/60">${commentDate}</span>
-                ${isOwnComment ? `
-                  <button 
-                    class="text-red-400 hover:text-red-300 text-xs opacity-60 hover:opacity-100 transition-opacity"
-                    onclick="deleteComment('${comment.id}')"
-                    title="Supprimer"
-                  >
-                    🗑️
-                  </button>
-                ` : ''}
-              </div>
-            </div>
-            <p class="text-white/90 text-sm leading-relaxed break-words">${comment.content}</p>
-          </div>
-        </div>
-      </div>
-    `;
-      }).join('');
-      
-      if (container) container.innerHTML = commentsHtml;
+        // ✅ Créer l'élément DOM directement
+        const commentDiv = document.createElement('div');
+        commentDiv.className = 'bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10';
+        commentDiv.setAttribute('data-comment-id', comment.id);
+        
+        const flexContainer = document.createElement('div');
+        flexContainer.className = 'flex gap-3';
+        
+        // Avatar container
+        const avatarContainer = document.createElement('div');
+        avatarContainer.className = 'flex-shrink-0';
+        
+        const avatarLink = document.createElement('a');
+        avatarLink.href = `/users/${user?.id || 'unknown'}`;
+        avatarLink.className = 'block';
+        
+        const avatarImg = document.createElement('img');
+        avatarImg.src = userAvatar;
+        avatarImg.alt = userName;
+        avatarImg.className = 'w-10 h-10 rounded-full border-2 border-white/20 object-cover hover:scale-110 transition-transform cursor-pointer';
+        avatarImg.title = `Voir le profil de ${userName}`;
+        
+        avatarLink.appendChild(avatarImg);
+        avatarContainer.appendChild(avatarLink);
+        
+        // Content container
+        const contentContainer = document.createElement('div');
+        contentContainer.className = 'flex-1 min-w-0';
+        
+        // Header with name and date
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'flex items-center justify-between mb-1';
+        
+        const nameH4 = document.createElement('h4');
+        nameH4.className = 'font-medium text-white truncate';
+        nameH4.textContent = userName;
+        
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'flex items-center gap-2';
+        
+        const dateSpan = document.createElement('span');
+        dateSpan.className = 'text-xs text-white/60';
+        dateSpan.textContent = commentDate;
+        
+        actionsDiv.appendChild(dateSpan);
+        
+        // Delete button if own comment
+        if (isOwnComment) {
+          const deleteBtn = document.createElement('button');
+          deleteBtn.className = 'text-red-400 hover:text-red-300 text-xs opacity-60 hover:opacity-100 transition-opacity';
+          deleteBtn.textContent = '🗑️';
+          deleteBtn.title = 'Supprimer';
+          deleteBtn.onclick = () => deleteComment(comment.id);
+          actionsDiv.appendChild(deleteBtn);
+        }
+        
+        headerDiv.appendChild(nameH4);
+        headerDiv.appendChild(actionsDiv);
+        
+        // Comment content
+        const contentP = document.createElement('p');
+        contentP.className = 'text-white/90 text-sm leading-relaxed break-words';
+        contentP.textContent = comment.content;
+        
+        contentContainer.appendChild(headerDiv);
+        contentContainer.appendChild(contentP);
+        
+        flexContainer.appendChild(avatarContainer);
+        flexContainer.appendChild(contentContainer);
+        commentDiv.appendChild(flexContainer);
+        
+        container.appendChild(commentDiv);
+      });
     }
     
     function showCommentsError() {
@@ -1132,12 +1184,14 @@ if (event) {
       if (loading) loading.style.display = 'none';
       
       if (container) {
-        container.innerHTML = `
-          <div class="text-center py-8 text-red-300">
-            <div class="text-4xl mb-2">⚠️</div>
-            <p>Erreur lors du chargement des commentaires</p>
-          </div>
+        container.innerHTML = '';
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'text-center py-8 text-red-300';
+        errorDiv.innerHTML = `
+          <div class="text-4xl mb-2">⚠️</div>
+          <p>Erreur lors du chargement des commentaires</p>
         `;
+        container.appendChild(errorDiv);
       }
     }
     
@@ -1193,38 +1247,35 @@ if (event) {
           if (currentUser.avatar) {
             try {
               avatarUrl = pb.files.getUrl(currentUser, currentUser.avatar);
-              avatarContainer.innerHTML = `
-            <img 
-              src="${avatarUrl}" 
-              alt="${currentUser.name || currentUser.username || 'Vous'}" 
-              class="w-10 h-10 rounded-full border-2 border-yellow-400 object-cover"
-            />
-          `;
+              avatarContainer.innerHTML = '';
+              const img = document.createElement('img');
+              img.src = avatarUrl;
+              img.alt = currentUser.name || currentUser.username || 'Vous';
+              img.className = 'w-10 h-10 rounded-full border-2 border-yellow-400 object-cover';
+              avatarContainer.appendChild(img);
             } catch (error) {
               // Fallback silencieux vers les initiales
               const initials = (currentUser.name || currentUser.username || 'U').substring(0, 2).toUpperCase();
               const fallbackAvatar = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><rect width="40" height="40" fill="%23${Math.floor(Math.random()*16777215).toString(16)}" rx="20"/><text x="20" y="25" text-anchor="middle" fill="white" font-family="Arial" font-size="14" font-weight="bold">${initials}</text></svg>`;
               
-              avatarContainer.innerHTML = `
-            <img 
-              src="${fallbackAvatar}" 
-              alt="${currentUser.name || currentUser.username || 'Vous'}" 
-              class="w-10 h-10 rounded-full border-2 border-yellow-400 object-cover"
-            />
-          `;
+              avatarContainer.innerHTML = '';
+              const img = document.createElement('img');
+              img.src = fallbackAvatar;
+              img.alt = currentUser.name || currentUser.username || 'Vous';
+              img.className = 'w-10 h-10 rounded-full border-2 border-yellow-400 object-cover';
+              avatarContainer.appendChild(img);
             }
           } else {
             // Utiliser les initiales si pas d'avatar
             const initials = (currentUser.name || currentUser.username || 'U').substring(0, 2).toUpperCase();
             const fallbackAvatar = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><rect width="40" height="40" fill="%23${Math.floor(Math.random()*16777215).toString(16)}" rx="20"/><text x="20" y="25" text-anchor="middle" fill="white" font-family="Arial" font-size="14" font-weight="bold">${initials}</text></svg>`;
             
-            avatarContainer.innerHTML = `
-          <img 
-            src="${fallbackAvatar}" 
-            alt="${currentUser.name || currentUser.username || 'Vous'}" 
-            class="w-10 h-10 rounded-full border-2 border-yellow-400 object-cover"
-          />
-        `;
+            avatarContainer.innerHTML = '';
+            const img = document.createElement('img');
+            img.src = fallbackAvatar;
+            img.alt = currentUser.name || currentUser.username || 'Vous';
+            img.className = 'w-10 h-10 rounded-full border-2 border-yellow-400 object-cover';
+            avatarContainer.appendChild(img);
           }
         }
       }
